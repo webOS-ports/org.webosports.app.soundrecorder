@@ -303,8 +303,14 @@ AppWindow {
             pageStack.push(Qt.resolvedUrl("PreferencesPage.qml"));
     }
 
+    property alias appMenu: appMenu
+
     Menu {
         id: appMenu
+        // The app menu drops from the top of the window, as in every app.
+        // Declared in AppWindow it would sit in the column under the
+        // header and open there.
+        parent: appWindow.contentItem
         LuneOSMenu.appMenuStyle: true
 
         MenuItem {

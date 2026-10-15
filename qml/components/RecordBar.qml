@@ -31,13 +31,16 @@ Rectangle {
     property bool paused: false
     // False while the privacy switch has the microphone off.
     property bool canRecord: true
+    // A shorter bar on a short screen, so the list keeps room.
+    property bool compact: false
+    readonly property real buttonSize: compact ? Units.gu(8) : Units.gu(10)
 
     signal recordClicked()
     signal stopClicked()
     signal pauseClicked()
     signal resumeClicked()
 
-    height: Units.gu(12)
+    height: compact ? Units.gu(9.5) : Units.gu(12)
     gradient: Gradient {
         GradientStop { position: 0.0; color: "#3a3a3a" }
         GradientStop { position: 0.08; color: "#202020" }
@@ -46,7 +49,7 @@ Rectangle {
 
     Image {
         anchors.centerIn: parent
-        width: Units.gu(10)
+        width: bar.buttonSize
         height: width
         source: "../images/bezel.svg"
         sourceSize: Qt.size(Math.ceil(width), Math.ceil(height))
@@ -57,7 +60,7 @@ Rectangle {
 
         objectName: "recordButton"
         anchors.centerIn: parent
-        width: Units.gu(10)
+        width: bar.buttonSize
         height: width
         source: Qt.resolvedUrl(bar.active ? "../images/stop.svg" : "../images/record.svg")
         pressedSource: Qt.resolvedUrl(bar.active ? "../images/stop-pressed.svg" : "../images/record-pressed.svg")

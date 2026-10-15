@@ -92,6 +92,25 @@ AppPage {
         audioPlayer.stop();
         openPath = path;
         audioPlayer.source = "file://" + path;
+        revealTimer.restart();
+    }
+
+    // Once the row has grown (150 ms), scroll so its player is in view: on
+    // a short screen it would open below the bottom of the list.
+    Timer {
+        id: revealTimer
+        interval: 200
+        onTriggered: {
+            for (var i = 0; i < page.shownFiles.length; i++) {
+                if (page.shownFiles[i].path === page.openPath) {
+                    // Taller than the list (the Q25's square): its player,
+                    // at the bottom of the row, is what matters.
+                    var row = list.itemAtIndex(i);
+                    list.positionViewAtIndex(i, row && row.height > list.height ? ListView.End : ListView.Contain);
+                    return;
+                }
+            }
+        }
     }
 
     function closePlayer() {
@@ -292,6 +311,7 @@ AppPage {
 
         RecordBar {
             Layout.fillWidth: true
+            compact: page.height < Units.gu(55)
             active: page.recorder.active
             paused: page.recorder.paused
             canRecord: !appWindow.micBlocked

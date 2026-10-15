@@ -263,6 +263,24 @@ TestCase {
         compare(page().openPath, "");
     }
 
+    function test_opened_player_is_scrolled_into_view() {
+        var files = [];
+        for (var i = 0; i < 5; i++)
+            files.push(file("Take " + i + ".mp3", i));
+        createApp(files, Units.gu(65), Units.gu(50));
+        var l = list();
+        app.openRecording(root + "/Take 4.mp3");
+        var row = null;
+        tryVerify(function() {
+            row = l.itemAtIndex(4);
+            if (!row || row.height < Units.gu(12))
+                return false;
+            var top = row.mapToItem(l, 0, 0).y;
+            // The player (the row's lower part) inside the list's view.
+            return top + row.height <= l.height + 1 || top <= 1;
+        }, 3000, "the opened player stays below the list's view");
+    }
+
     function test_target_opens_that_recordings_player() {
         createApp([file("A.mp3", 1), file("B.mp3", 2)]);
         app.openRecording("file://" + root + "/B.mp3");
@@ -295,6 +313,17 @@ TestCase {
         compare(app.screenBlockCall, null);
         // Off by default.
         compare(app.prefs.keepScreenOn, false);
+    }
+
+    function test_app_menu_opens_at_the_top_of_the_window() {
+        createApp([]);
+        var menu = findChild(app.contentItem, "appMenu") || app.appMenu;
+        verify(menu, "no app menu");
+        menu.popup(0, 0);
+        tryCompare(menu, "opened", true);
+        var p = menu.contentItem.mapToItem(null, 0, 0);
+        verify(p.y < app.header.height / 2, "menu opens at y " + p.y + ", under the header");
+        menu.close();
     }
 
     function test_preferences_page() {
