@@ -84,11 +84,33 @@ sh_ "sed -i 's/^format=.*/format=mp3/' $PREFS"
 echo "== $NAME"
 # A fresh card, and time for the shell to settle after the samples'
 # dashboards have come and gone.
+# Is the card drawn right? The card shell sometimes draws a fresh launch
+# squashed and pinned to the bottom (a shell bug, after a dashboard closes):
+# then the header's record icon sits far below its place.
+drawn_right() {
+    python3 -I - "$OUT/$1.png" <<'PY'
+import sys
+from PIL import Image
+im = Image.open(sys.argv[1]).convert("RGB")
+w, h = im.size
+p = im.load()
+for y in range(h // 4):
+    if any(p[x, y][0] > 200 and p[x, y][1] < 80 and p[x, y][2] < 80 for x in range(w // 6)):
+        sys.exit(0 if y / h < 0.11 else 1)
+sys.exit(1)
+PY
+}
+
 # Started again, so it reads the names, lengths and preferences set above.
-close
-launch '{}'
-sleep 6
-shot 1-recordings
+for attempt in 1 2 3; do
+    close
+    sleep 12
+    launch '{}'
+    sleep 6
+    shot 1-recordings
+    drawn_right 1-recordings && break
+    echo "   the card shell drew the card squashed; again"
+done
 
 launch "{\"target\":\"$DIR/Interview with Anna.flac\"}"
 sleep 3
