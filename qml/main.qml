@@ -90,6 +90,7 @@ AppWindow {
 
         formatKey: preferences.format
         quality: preferences.quality
+        channels: preferences.channels
         inputId: preferences.inputId
         inputVolume: preferences.inputVolume
 
@@ -122,7 +123,7 @@ AppWindow {
             notice = "There is not enough free space to record.";
             return false;
         }
-        var ext = Recordings.format(preferences.format).ext;
+        var ext = recorder.formatFor(preferences.format).ext;
         var taken = fileOps.list(Recordings.extensions).map(function(f) { return f.name; });
         var name = Recordings.uniqueName(Recordings.defaultName(new Date()), ext, taken);
         notice = "";

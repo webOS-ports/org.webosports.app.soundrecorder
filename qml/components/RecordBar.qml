@@ -17,6 +17,7 @@
 import QtQuick
 
 import LunaNext.Common 0.1
+import LuneOS.Components 1.0
 
 
 /*
@@ -47,23 +48,21 @@ Rectangle {
         GradientStop { position: 1.0; color: "#0c0c0c" }
     }
 
-    Image {
+    ArtworkImage {
         anchors.centerIn: parent
         width: bar.buttonSize
         height: width
-        source: "../images/bezel.svg"
-        sourceSize: Qt.size(Math.ceil(width), Math.ceil(height))
+        svg: Qt.resolvedUrl("../images/bezel.svg")
     }
 
-    SvgButton {
+    ArtworkButton {
         id: recordButton
 
         objectName: "recordButton"
         anchors.centerIn: parent
         width: bar.buttonSize
         height: width
-        source: Qt.resolvedUrl(bar.active ? "../images/stop.svg" : "../images/record.svg")
-        pressedSource: Qt.resolvedUrl(bar.active ? "../images/stop-pressed.svg" : "../images/record-pressed.svg")
+        image: bar.active ? "stop" : "record"
         opacity: bar.canRecord || bar.active ? 1 : 0.4
         onClicked: {
             if (bar.active)

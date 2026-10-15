@@ -17,6 +17,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtTest
+import QtMultimedia
 
 import LunaNext.Common 0.1
 
@@ -97,17 +98,25 @@ TestCase {
         verify(!findChild(page(), "pauseButton").visible);
     }
 
+    // The artwork comes through LuneOS.Components' ArtworkImage
+    // (image://artwork: drawn once at the size shown, kept as PNG), the
+    // pressed look loaded up front with the normal one.
     function test_vector_buttons_load_at_their_size() {
         createApp([]);
         var button = findChild(page(), "recordButton");
-        var image = button.children[0];
-        tryCompare(image, "status", Image.Ready);
-        verify(/record\.svg$/.test(image.source.toString()), image.source);
-        // Rendered at the size shown, not scaled from a bitmap.
-        compare(image.sourceSize.width, Math.ceil(button.width));
+        var normal = findChild(button, "normalImage");
+        var pressed = findChild(button, "pressedImage");
+        verify(normal && pressed, "no button images");
+        tryCompare(normal, "status", Image.Ready);
+        tryCompare(pressed, "status", Image.Ready);
+        verify(/^image:\/\/artwork\/.*record\.svg$/.test(normal.source.toString()), normal.source);
+        verify(/^image:\/\/artwork\/.*record-pressed\.svg$/.test(pressed.source.toString()), pressed.source);
+        verify(normal.visible && !pressed.visible);
+        compare(normal.sourceSize.width, Math.ceil(button.width));
+        compare(pressed.sourceSize.width, Math.ceil(button.width));
         var bezel = button.parent.children[0];
         tryCompare(bezel, "status", Image.Ready);
-        verify(/bezel\.svg$/.test(bezel.source.toString()), bezel.source);
+        verify(/^image:\/\/artwork\/.*bezel\.svg$/.test(bezel.source.toString()), bezel.source);
     }
 
     function test_recordings_newest_first() {
@@ -334,6 +343,48 @@ TestCase {
         // Asking again does not stack a second one.
         app.openPreferences();
         compare(app.pageStack.depth, 2);
+    }
+
+    // The formats offered are those the recorder can write; a stored one it
+    // cannot write shows (and records) as MP3.
+    function test_preferences_offer_what_the_recorder_writes() {
+        createApp([]);
+        app.recorder.formats = [Recordings.format("mp3"), Recordings.format("ogg")];
+        app.prefs.format = "opus";
+        app.openPreferences();
+        tryCompare(app.pageStack, "busy", false);
+        var selector = findChild(app.pageStack.currentItem, "formatSelector");
+        verify(selector, "no format selector");
+        compare(selector.values, ["mp3", "ogg"]);
+        compare(selector.model, ["MP3", "Ogg Vorbis"]);
+        compare(selector.value, "mp3");
+        app.prefs.format = "ogg";
+        compare(selector.value, "ogg");
+    }
+
+    // Mono and the quality reach the recorder; lossless formats have no
+    // quality to choose.
+    function test_channels_and_quality_preferences() {
+        createApp([]);
+        app.recorder.formats = [Recordings.format("mp3"), Recordings.format("flac")];
+        app.prefs.format = "mp3";
+        app.openPreferences();
+        tryCompare(app.pageStack, "busy", false);
+        var channels = findChild(app.pageStack.currentItem, "channelsSelector");
+        var quality = findChild(app.pageStack.currentItem, "qualitySelector");
+        verify(channels && quality, "no channels or quality selector");
+        compare(channels.values, [2, 1]);
+        compare(app.recorder.channels, 2);
+        channels.chosen(1);
+        compare(app.prefs.channels, 1);
+        compare(app.recorder.channels, 1);
+        quality.chosen(MediaRecorder.HighQuality);
+        compare(app.recorder.quality, MediaRecorder.HighQuality);
+        verify(quality.visible);
+        app.prefs.format = "flac";
+        verify(!quality.visible);
+        app.prefs.channels = 2;
+        app.prefs.quality = MediaRecorder.NormalQuality;
     }
 
     // In grid units, as the device sizes things: the Q25's square while its

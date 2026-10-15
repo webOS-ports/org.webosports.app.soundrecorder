@@ -28,18 +28,45 @@ TestCase {
     name: "Recordings"
 
     function test_formats() {
-        compare(Recordings.formats.map(function(f) { return f.key; }), ["mp3", "flac", "wav"]);
+        compare(Recordings.formats.map(function(f) { return f.key; }),
+                ["mp3", "aac", "ogg", "opus", "flac", "wav"]);
         compare(Recordings.format("flac").ext, ".flac");
+        compare(Recordings.format("aac").ext, ".m4a");
+        compare(Recordings.format("ogg").codec, "Vorbis");
         // An unknown or old setting falls back to the first, MP3.
-        compare(Recordings.format("ogg").key, "mp3");
+        compare(Recordings.format("speex").key, "mp3");
         compare(Recordings.format(undefined).key, "mp3");
-        compare(Recordings.extensions, [".mp3", ".flac", ".wav"]);
+        compare(Recordings.extensions, [".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav"]);
+    }
+
+    // Only what Qt can write is offered, and MP3 always.
+    function test_offered() {
+        var asked = [];
+        var offered = Recordings.offered(function(container, codec) {
+            asked.push(container + "/" + codec);
+            return codec !== "Opus" && codec !== "AAC";
+        });
+        compare(offered.map(function(f) { return f.key; }), ["mp3", "ogg", "flac", "wav"]);
+        compare(asked, ["Mpeg4Audio/AAC", "Ogg/Vorbis", "Ogg/Opus", "FLAC/FLAC", "Wave/Wave"]);
+        compare(Recordings.offered(function() { return false; }).map(function(f) { return f.key; }),
+                ["mp3"]);
+    }
+
+    // A stored format that cannot be written here records MP3.
+    function test_chosen() {
+        var offered = [Recordings.format("mp3"), Recordings.format("ogg")];
+        compare(Recordings.chosen("ogg", offered).key, "ogg");
+        compare(Recordings.chosen("opus", offered).key, "mp3");
+        compare(Recordings.chosen("speex", offered).key, "mp3");
+        compare(Recordings.chosen("aac", []).key, "mp3");
     }
 
     function test_mime() {
         compare(Recordings.mimeForPath("/media/internal/Recordings/a.mp3"), "audio/mpeg");
         compare(Recordings.mimeForPath("/x/Talk.FLAC"), "audio/flac");
         compare(Recordings.mimeForPath("/x/b.wav"), "audio/wav");
+        compare(Recordings.mimeForPath("/x/b.m4a"), "audio/mp4");
+        compare(Recordings.mimeForPath("/x/b.ogg"), "audio/ogg");
         compare(Recordings.mimeForPath("/x/notes.txt"), "application/octet-stream");
         compare(Recordings.formatForPath("/x/noext"), null);
     }

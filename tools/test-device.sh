@@ -1,6 +1,6 @@
 #!/bin/bash
-# Records on a real device and checks what comes out: for each format and
-# channel count, set the preference, start the app with {"action":
+# Records on a real device and checks what comes out: for each format,
+# channel count and quality, set the preferences, start the app with {"action":
 # "record"}, stop it with {"action": "stop"} a few seconds later, pull the
 # file and check with ffprobe that it is that format, about that long and
 # not silence. Takes a screenshot of the screen while recording (the
@@ -42,13 +42,19 @@ restore() {
 }
 trap restore EXIT
 
-for case in mp3 flac wav; do
-    fmt=$case
-    # Two channels: Qt's GStreamer backend records stereo, always.
-    ch=2
+# case:format:codec ffprobe should find:channels:quality:required. Opus
+# only once the device has an Opus encoder; without one the app records MP3
+# instead. Mono and the two qualities need Qt Multimedia's patch that hands
+# them to the encoder; the bit rates of mp3-low and mp3-best are compared
+# after.
+for spec in mp3:mp3:mp3:2:2:yes aac:aac:aac:2:2:yes ogg:ogg:vorbis:2:2:yes opus:opus:opus:2:2:no \
+        flac:flac:flac:2:2:yes wav:wav:pcm_s16le:2:2:yes \
+        mp3-mono:mp3:mp3:1:2:yes opus-mono:opus:opus:1:2:no \
+        mp3-low:mp3:mp3:2:1:yes mp3-best:mp3:mp3:2:3:yes; do
+    IFS=: read -r case fmt want_codec ch quality required <<< "$spec"
     # The app reads its preferences when it starts.
     $ADB shell "luna-send -n 1 -w 3000 luna://com.webos.service.applicationmanager/closeByAppId '{\"id\":\"$ID\"}' >/dev/null 2>&1; sleep 1; \
-        mkdir -p \$(dirname $PREFS); printf '[recording]\nformat=$fmt\nquality=2\ninputId=\ninputVolume=1\n' > $PREFS"
+        mkdir -p \$(dirname $PREFS); printf '[recording]\nformat=$fmt\nquality=$quality\nchannels=$ch\ninputId=\ninputVolume=1\n' > $PREFS"
     launch '{"action":"record"}'
     sleep "$SECONDS_REC"
     [ "$case" = mp3 ] && shot "recording"
@@ -58,6 +64,15 @@ for case in mp3 flac wav; do
     if echo "$before" | grep -qxF "$new" || [ -z "$new" ]; then
         echo "FAIL $case: no new recording"; failures=$((failures + 1)); continue
     fi
+    if [ "$fmt" != mp3 ] && [ "${new##*.}" = mp3 ]; then
+        $ADB shell "rm -f '$DIR/$new'"
+        if [ $required = yes ]; then
+            echo "FAIL $case: not offered, recorded MP3"; failures=$((failures + 1))
+        else
+            echo "skip $case: not offered on this device, recorded MP3"
+        fi
+        continue
+    fi
     $ADB pull "$DIR/$new" "$OUT/$case-$new" >/dev/null
     f="$OUT/$case-$new"
     codec=$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,channels -of csv=p=0 "$f" 2>/dev/null || echo "unreadable ($(stat -c %s "$f") bytes)")
@@ -65,21 +80,37 @@ for case in mp3 flac wav; do
     dur=$(ffmpeg -nostats -i "$f" -f null - 2>&1 | grep -oE 'time=[0-9:.]+' | tail -n 1 | cut -d= -f2)
     secs=$(echo "$dur" | awk -F: '{ print $1 * 3600 + $2 * 60 + $3 }')
     peak=$(ffmpeg -nostats -i "$f" -af volumedetect -f null - 2>&1 | grep -oE 'max_volume: [-0-9.]+' | awk '{ print $2 }')
-    want_codec=$([ $fmt = wav ] && echo pcm_s16le || echo $fmt)
     ok=1
     case "$codec" in "$want_codec,$ch") ;; *) ok=0 ;; esac
     awk -v p="$peak" 'BEGIN { exit !(p > -80) }' || ok=0
     # The length the app stored for the list must be the file's: the
     # recording starts only once the app is up, so not the full SECONDS_REC.
-    stored=$($ADB shell "grep -F \"$(echo "$new" | sed 's/ /%20/g')=\" $PREFS" | tr -d '\r' | cut -d= -f2)
+    # Stored once the file is finished, which takes the TouchPad a second or
+    # two for an M4A (the muxer writes its index at the end): wait for it.
+    stored=$($ADB shell "k=\"$(echo "$new" | sed 's/ /%20/g')=\"; i=0; \
+        while [ \$i -lt 15 ] && ! grep -qF \"\$k\" $PREFS; do sleep 1; i=\$((i + 1)); done; \
+        grep -F \"\$k\" $PREFS" | tr -d '\r' | cut -d= -f2)
     awk -v s="$secs" -v m="${stored:-0}" 'BEGIN { exit !(m > 0 && s > 1 && (s - m / 1000) < 0.6 && (m / 1000 - s) < 0.6) }' || ok=0
+    # FLAC from the recorder has no bit rate in its header ("N/A").
+    rate=$(ffprobe -v error -show_entries format=bit_rate -of csv=p=0 "$f" 2>/dev/null)
+    case "$rate" in ''|*[!0-9]*) rate=0 ;; esac
+    eval "rate_${case//-/_}=\${rate:-0}"
     if [ $ok = 1 ]; then
-        echo "ok   $case: $new ($codec, ${secs}s, app says ${stored} ms, peak ${peak} dB)"
+        echo "ok   $case: $new ($codec, ${secs}s, app says ${stored} ms, peak ${peak} dB, $((${rate:-0} / 1000)) kbit/s)"
     else
         echo "FAIL $case: $new ($codec, wanted $want_codec,$ch; ${secs}s; app says ${stored:-nothing} ms; peak ${peak} dB)"; failures=$((failures + 1))
     fi
     $ADB shell "rm -f '$DIR/$new'"
 done
+
+# Very high quality must come out well above Low: the same quiet room, so
+# at least half again the bit rate.
+if [ -n "$rate_mp3_low" ] && [ -n "$rate_mp3_best" ] && [ $((rate_mp3_best * 2)) -gt $((rate_mp3_low * 3)) ]; then
+    echo "ok   quality: MP3 at Low $((rate_mp3_low / 1000)) kbit/s, at Very high $((rate_mp3_best / 1000)) kbit/s"
+else
+    echo "FAIL quality: MP3 at Low $((${rate_mp3_low:-0} / 1000)) kbit/s, at Very high $((${rate_mp3_best:-0} / 1000)) kbit/s"
+    failures=$((failures + 1))
+fi
 
 shot "after"
 echo "$([ $failures = 0 ] && echo PASS || echo "FAILED: $failures") - files and screenshots in $OUT"

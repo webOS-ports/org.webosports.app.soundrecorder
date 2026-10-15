@@ -26,13 +26,13 @@ import LuneOS.Forms 1.0
 import "js/Recordings.js" as Recordings
 
 /*
- * How recordings are made: format, quality, which microphone and how
- * loud, and whether the screen stays on while recording. They apply to
- * the next recording.
+ * How recordings are made: format, quality, stereo or mono, which
+ * microphone and how loud, and whether the screen stays on while
+ * recording. They apply to the next recording.
  *
- * There is no mono/stereo choice: Qt Multimedia's GStreamer backend
- * records two channels whatever MediaRecorder.audioChannelCount says
- * (measured on the mindphone, 2026-10-15).
+ * Quality and mono need LuneOS's Qt Multimedia patch that hands them to
+ * the encoder (meta-luneos qtmultimedia 0006); without it Qt's GStreamer
+ * backend records stereo at the encoder's defaults whatever is asked.
  */
 AppPage {
     id: page
@@ -61,21 +61,31 @@ AppPage {
                 title: "Recording"
 
                 LabelAndSelector {
+                    objectName: "formatSelector"
                     label: "Format"
-                    model: Recordings.formats.map(function(f) { return f.label; })
-                    values: Recordings.formats.map(function(f) { return f.key; })
-                    value: Recordings.format(page.prefs.format).key
+                    model: page.recorder.formats.map(function(f) { return f.label; })
+                    values: page.recorder.formats.map(function(f) { return f.key; })
+                    value: page.recorder.formatFor(page.prefs.format).key
                     onChosen: (v) => page.prefs.format = v
                 }
                 LabelAndSelector {
+                    objectName: "qualitySelector"
                     label: "Quality"
                     // Lossless formats have no quality to choose.
-                    visible: !Recordings.format(page.prefs.format).lossless
+                    visible: !page.recorder.formatFor(page.prefs.format).lossless
                     model: ["Low", "Normal", "High", "Very high"]
                     values: [MediaRecorder.LowQuality, MediaRecorder.NormalQuality,
                              MediaRecorder.HighQuality, MediaRecorder.VeryHighQuality]
                     value: page.prefs.quality
                     onChosen: (v) => page.prefs.quality = v
+                }
+                LabelAndSelector {
+                    objectName: "channelsSelector"
+                    label: "Channels"
+                    model: ["Stereo", "Mono"]
+                    values: [2, 1]
+                    value: page.prefs.channels
+                    onChosen: (v) => page.prefs.channels = v
                 }
                 LabelAndSwitch {
                     label: "Keep screen on while recording"
@@ -86,7 +96,7 @@ AppPage {
 
             ExplanationText {
                 Layout.fillWidth: true
-                text: "MP3 is small and plays everywhere. FLAC and WAV keep every detail: FLAC at about half the size of WAV, WAV for software that knows nothing else."
+                text: "MP3 is small and plays everywhere, AAC (M4A) nearly everywhere; Ogg Vorbis and Opus are open formats, Opus the smallest. FLAC and WAV keep every detail: FLAC at about half the size of WAV, WAV for software that knows nothing else."
             }
 
             FormGroup {

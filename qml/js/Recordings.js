@@ -23,21 +23,48 @@
  */
 
 /*
- * The formats offered. Only those Qt Multimedia really writes on LuneOS:
- * asking its GStreamer backend for Ogg Vorbis or Opus gives Ogg FLAC, and
- * AAC picks gst-droid's encoder, which fails on the devices tried (measured
- * on the mindphone, 2026-10-15). "key" is what the preferences store.
+ * The formats the app knows. "container" and "codec" are Qt Multimedia's
+ * MediaFormat.FileFormat and MediaFormat.AudioCodec names; Qt says which it
+ * can write on the device, and only those are offered (offered()). "key" is
+ * what the preferences store.
+ *
+ * Measured on the mindphone, 2026-10-15: AAC needs libav's encoder ranked
+ * up (SoundRecorderApp/encoderranks.h); Opus needs GStreamer's opusenc
+ * (gst-plugins-base built with opus), without which Qt does not offer it
+ * and neither does the app.
  */
 var formats = [
-    { key: "mp3",  label: "MP3",  ext: ".mp3",  mime: "audio/mpeg", lossless: false },
-    { key: "flac", label: "FLAC", ext: ".flac", mime: "audio/flac", lossless: true },
-    { key: "wav",  label: "WAV",  ext: ".wav",  mime: "audio/wav",  lossless: true }
+    { key: "mp3",  label: "MP3",        ext: ".mp3",  mime: "audio/mpeg", lossless: false, container: "MP3",        codec: "MP3" },
+    { key: "aac",  label: "AAC (M4A)",  ext: ".m4a",  mime: "audio/mp4",  lossless: false, container: "Mpeg4Audio", codec: "AAC" },
+    { key: "ogg",  label: "Ogg Vorbis", ext: ".ogg",  mime: "audio/ogg",  lossless: false, container: "Ogg",        codec: "Vorbis" },
+    { key: "opus", label: "Opus",       ext: ".opus", mime: "audio/ogg",  lossless: false, container: "Ogg",        codec: "Opus" },
+    { key: "flac", label: "FLAC",       ext: ".flac", mime: "audio/flac", lossless: true,  container: "FLAC",       codec: "FLAC" },
+    { key: "wav",  label: "WAV",        ext: ".wav",  mime: "audio/wav",  lossless: true,  container: "Wave",       codec: "Wave" }
 ];
 
 function format(key) {
     for (var i = 0; i < formats.length; i++) {
         if (formats[i].key === key)
             return formats[i];
+    }
+    return formats[0];
+}
+
+/*
+ * The formats to offer: those canEncode(container, codec) says can be
+ * written. MP3 always, so there is something to record with.
+ */
+function offered(canEncode) {
+    return formats.filter(function(f) {
+        return f === formats[0] || canEncode(f.container, f.codec);
+    });
+}
+
+// The format for a stored key, or MP3 when that one is not offered (here).
+function chosen(key, offeredFormats) {
+    for (var i = 0; i < offeredFormats.length; i++) {
+        if (offeredFormats[i].key === key)
+            return offeredFormats[i];
     }
     return formats[0];
 }

@@ -17,6 +17,7 @@
 import QtQuick
 
 import LunaNext.Common 0.1
+import LuneOS.Components 1.0
 
 /*
  * The legacy camera's black round button, as vectors, with a glyph drawn
@@ -32,10 +33,17 @@ Item {
     width: Units.gu(6.25)
     height: width
 
-    Image {
+    // Both up front (ArtworkImage: drawn once, kept as PNG), so a press does
+    // not wait for its picture.
+    ArtworkImage {
         anchors.fill: parent
-        source: area.pressed ? "../images/round-button-pressed.svg" : "../images/round-button.svg"
-        sourceSize: Qt.size(Math.ceil(button.width), Math.ceil(button.height))
+        svg: Qt.resolvedUrl("../images/round-button.svg")
+        visible: !area.pressed
+    }
+    ArtworkImage {
+        anchors.fill: parent
+        svg: Qt.resolvedUrl("../images/round-button-pressed.svg")
+        visible: area.pressed
     }
 
     Row {

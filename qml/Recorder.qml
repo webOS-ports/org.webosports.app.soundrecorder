@@ -33,6 +33,8 @@ Item {
     // What the next recording is made with (PreferencesModel).
     property string formatKey: "mp3"
     property int quality: MediaRecorder.NormalQuality
+    // 2 for stereo, 1 for mono.
+    property int channels: 2
     // QAudioDevice.id as a string, "" for the system's default input.
     property string inputId: ""
     property real inputVolume: 1.0
@@ -54,6 +56,25 @@ Item {
     signal failed(string path, string reason)
 
     readonly property var inputs: mediaDevices.audioInputs
+
+    // The formats Qt Multimedia can write here (Recordings.offered()), MP3
+    // until worked out at start. Not a binding: setting the probe's format
+    // writes back into it, which a binding reading it would see as a loop.
+    property var formats: [Recordings.formats[0]]
+
+    Component.onCompleted: {
+        formats = Recordings.offered(function(container, codec) {
+            var f = probeRecorder.mediaFormat;
+            f.fileFormat = MediaFormat.FileFormat[container];
+            return f.supportedAudioCodecs(MediaFormat.Encode).indexOf(MediaFormat.AudioCodec[codec]) >= 0;
+        });
+    }
+
+    // The format a recording made now would have: the preference's, or MP3
+    // when that one cannot be written here.
+    function formatFor(key) {
+        return Recordings.chosen(key, formats);
+    }
 
     // QAudioDevice.id is a QByteArray, an ArrayBuffer in QML.
     function deviceIdString(device) {
@@ -87,13 +108,16 @@ Item {
         lastDuration = 0;
         stopping = false;
 
-        var f = Recordings.format(formatKey);
+        // The scoped names: MediaFormat.FLAC alone is the file format's
+        // value, which as a codec means something else.
+        var f = formatFor(formatKey);
         var mf = mediaRecorder.mediaFormat;
-        mf.fileFormat = f.key === "flac" ? MediaFormat.FLAC : f.key === "wav" ? MediaFormat.Wave : MediaFormat.MP3;
-        mf.audioCodec = f.key === "flac" ? MediaFormat.FLAC : f.key === "wav" ? MediaFormat.Wave : MediaFormat.MP3;
-        mf.videoCodec = MediaFormat.Unspecified;
+        mf.fileFormat = MediaFormat.FileFormat[f.container];
+        mf.audioCodec = MediaFormat.AudioCodec[f.codec];
+        mf.videoCodec = MediaFormat.VideoCodec.Unspecified;
         mediaRecorder.mediaFormat = mf;
         mediaRecorder.quality = quality;
+        mediaRecorder.audioChannelCount = channels;
         session.item.audioInput.device = inputDevice();
         session.item.audioInput.volume = inputVolume;
 
@@ -132,6 +156,11 @@ Item {
 
     MediaDevices {
         id: mediaDevices
+    }
+
+    // Only asked what it can write; never records.
+    MediaRecorder {
+        id: probeRecorder
     }
 
     Loader {
