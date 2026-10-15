@@ -27,7 +27,8 @@ import "js/Recordings.js" as Recordings
 
 /*
  * How recordings are made: format, quality, which microphone and how
- * loud. They apply to the next recording.
+ * loud, and whether the screen stays on while recording. They apply to
+ * the next recording.
  *
  * There is no mono/stereo choice: Qt Multimedia's GStreamer backend
  * records two channels whatever MediaRecorder.audioChannelCount says
@@ -75,6 +76,11 @@ AppPage {
                              MediaRecorder.HighQuality, MediaRecorder.VeryHighQuality]
                     value: page.prefs.quality
                     onChosen: (v) => page.prefs.quality = v
+                }
+                LabelAndSwitch {
+                    label: "Keep screen on while recording"
+                    checked: page.prefs.keepScreenOn
+                    onToggled: page.prefs.keepScreenOn = checked
                 }
             }
 

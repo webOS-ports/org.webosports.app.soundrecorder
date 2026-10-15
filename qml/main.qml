@@ -170,6 +170,31 @@ AppWindow {
                      function(error) { console.warn("Could not keep the device awake: " + error); });
     }
 
+    /*
+     * The screen kept on while recording, if the user wants it: luna-
+     * displaymanager's "requestBlock" holds the display as it is (no
+     * dimming, no timeout) for as long as the call stays open, and
+     * cancelling the call lets go. Needs "display.operation".
+     */
+    readonly property bool screenKeptOn: recorder.active && preferences.keepScreenOn
+    property var screenBlockCall: null
+    onScreenKeptOnChanged: updateScreenBlock(screenKeptOn)
+
+    function updateScreenBlock(on) {
+        if (on && !screenBlockCall) {
+            // The desktop stand-in for the bus returns no call object.
+            screenBlockCall = service.subscribe("luna://com.palm.display/control/setProperty",
+                                                JSON.stringify({"requestBlock": true, "client": "org.webosports.app.soundrecorder"}),
+                                                function() {},
+                                                function(error) { console.warn("Could not keep the screen on: " + error); })
+                              || ({});
+        } else if (!on && screenBlockCall) {
+            if (typeof screenBlockCall.cancel === "function")
+                screenBlockCall.cancel();
+            screenBlockCall = null;
+        }
+    }
+
     Timer {
         interval: 5 * 60 * 1000
         repeat: true

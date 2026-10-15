@@ -1,4 +1,4 @@
 {
-    "org.webosports.app.soundrecorder": [ "sleep.operation", "killswitch.query", "systemsettings.query", "application.launcher", "appmanager.management" ],
-    "org.webosports.app.soundrecorder-*": [ "sleep.operation", "killswitch.query", "systemsettings.query", "application.launcher", "appmanager.management" ]
+    "org.webosports.app.soundrecorder": [ "sleep.operation", "display.operation", "killswitch.query", "systemsettings.query", "application.launcher", "appmanager.management" ],
+    "org.webosports.app.soundrecorder-*": [ "sleep.operation", "display.operation", "killswitch.query", "systemsettings.query", "application.launcher", "appmanager.management" ]
 }

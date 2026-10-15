@@ -281,6 +281,22 @@ TestCase {
         compare(page().openPath, "");
     }
 
+    function test_screen_kept_on_only_while_wanted() {
+        createApp([]);
+        verify(!app.screenKeptOn);
+        // Recording with the setting on takes the display block, and
+        // stopping (or switching the setting off) lets it go.
+        app.updateScreenBlock(true);
+        verify(app.screenBlockCall !== null);
+        app.updateScreenBlock(true);
+        app.updateScreenBlock(false);
+        compare(app.screenBlockCall, null);
+        app.updateScreenBlock(false);
+        compare(app.screenBlockCall, null);
+        // Off by default.
+        compare(app.prefs.keepScreenOn, false);
+    }
+
     function test_preferences_page() {
         createApp([]);
         app.openPreferences();

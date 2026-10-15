@@ -36,7 +36,9 @@ Features
   Delete / Cancel in place, as the legacy webOS lists did. Renaming never
   replaces another recording.
 - **Preferences** (app menu): format (MP3, FLAC, WAV), quality, input and
-  input level; the folder and the free space.
+  input level, and whether to keep the screen on while recording (off by
+  default; luna-displaymanager's `requestBlock`); the folder and the free
+  space.
 - **Privacy switch:** with the microphone switched off
   (org.webosports.service.killswitch) the app says so and does not record,
   and stops a running recording, keeping what it has.
@@ -68,7 +70,6 @@ Measured on the mindphone and the TouchPad, 2026-10-15:
   and the strip then does not appear rather than suggesting a dead
   microphone. A second stream at another sample rate even left the
   TouchPad's recordings empty, so the meter uses the input's own format.
-- **No "keep the screen on".** The card shell has no window property for it.
 
 Tested on
 ---------

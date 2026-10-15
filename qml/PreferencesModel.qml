@@ -34,4 +34,6 @@ Settings {
     property int quality: MediaRecorder.NormalQuality
     property string inputId: ""
     property real inputVolume: 1.0
+    // Off by default: the screen is what uses the battery.
+    property bool keepScreenOn: false
 }
