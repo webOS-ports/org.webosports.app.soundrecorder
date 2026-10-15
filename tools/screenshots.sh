@@ -85,8 +85,9 @@ echo "== $NAME"
 # A fresh card, and time for the shell to settle after the samples'
 # dashboards have come and gone.
 # Is the card drawn right? The card shell sometimes draws a fresh launch
-# squashed and pinned to the bottom (a shell bug, after a dashboard closes):
-# then the header's record icon sits far below its place.
+# squashed and pinned to the bottom (a shell bug, after a dashboard closes),
+# leaving a band of plain white between the status bar and the header,
+# where a card drawn right starts with the header straight away.
 drawn_right() {
     python3 -I - "$OUT/$1.png" <<'PY'
 import sys
@@ -94,10 +95,9 @@ from PIL import Image
 im = Image.open(sys.argv[1]).convert("RGB")
 w, h = im.size
 p = im.load()
-for y in range(h // 4):
-    if any(p[x, y][0] > 200 and p[x, y][1] < 80 and p[x, y][2] < 80 for x in range(w // 6)):
-        sys.exit(0 if y / h < 0.11 else 1)
-sys.exit(1)
+white = sum(1 for y in range(h // 4)
+            if all(min(p[x, y]) >= 250 for x in range(int(w * 0.3), int(w * 0.7), 4)))
+sys.exit(0 if white <= 20 else 1)
 PY
 }
 

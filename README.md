@@ -8,7 +8,7 @@ legacy webOS camera's record and stop buttons, redrawn as vectors.
 Screenshots
 -----------
 
-Taken on a device with `tools/screenshots.sh`: the recordings, a
+Taken on the devices with `tools/screenshots.sh`: the recordings, a
 recording's player, recording (with its dashboard in the notification area
 at the bottom right) and the preferences.
 
@@ -17,6 +17,22 @@ at the bottom right) and the preferences.
 | Recordings | Player | Recording | Preferences |
 |---|---|---|---|
 | ![](docs/screenshots/mindphone-1-recordings.png) | ![](docs/screenshots/mindphone-2-player.png) | ![](docs/screenshots/mindphone-3-recording.png) | ![](docs/screenshots/mindphone-4-preferences.png) |
+
+**Square, 720x720** (Q25). There is no room for the list under the
+recording panel here, so while recording the panel has the page to itself.
+
+| Recordings | Player | Recording | Preferences |
+|---|---|---|---|
+| ![](docs/screenshots/q25-1-recordings.png) | ![](docs/screenshots/q25-2-player.png) | ![](docs/screenshots/q25-3-recording.png) | ![](docs/screenshots/q25-4-preferences.png) |
+
+**Tablet, 1024x768** (HP TouchPad). Its microphone gives the level meter
+nothing while recording (see below), so the meter is left out.
+
+| Recordings | Player |
+|---|---|
+| ![](docs/screenshots/touchpad-1-recordings.png) | ![](docs/screenshots/touchpad-2-player.png) |
+| **Recording** | **Preferences** |
+| ![](docs/screenshots/touchpad-3-recording.png) | ![](docs/screenshots/touchpad-4-preferences.png) |
 
 Features
 --------
