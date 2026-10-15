@@ -1,0 +1,5 @@
+{ "png": "known-button.png", "out": "out/known-button.svg", "cx": 40, "cy": 40, "split": 40,
+  "stops": 24, "rounds": 12, "smooth": 0.001,
+  "layers": [
+    { "shape": "disc", "r": 30, "stops": 48 },
+    { "shape": "ring", "ri": 24, "r": 30, "fill": "radial", "stops": 16 } ] }

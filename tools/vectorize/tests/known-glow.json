@@ -1,0 +1,5 @@
+{ "png": "known-glow.png", "out": "out/known-glow.svg", "cx": 30, "cy": 30, "split": 30,
+  "stops": 8, "rounds": 10, "smooth": 0.001,
+  "layers": [
+    { "shape": "glow", "x": 20, "y": 20, "w": 20, "h": 20, "d": 8, "fade": true, "stops": 9 },
+    { "shape": "rect", "x": 20, "y": 20, "w": 20, "h": 20, "stops": 4 } ] }

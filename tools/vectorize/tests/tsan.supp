@@ -1,0 +1,22 @@
+# ThreadSanitizer suppressions for the artwork tools.
+#
+# The tools are single-threaded: every Qt call is made on the main thread
+# and nothing of theirs is shared with another. Qt itself starts threads -
+# its raster paint engine splits large fills over a thread pool, and on a
+# desktop QGuiApplication starts a D-Bus thread - and the build host's Qt is
+# not built with TSan, and its locks are futexes TSan does not intercept, so
+# TSan cannot see Qt's own synchronisation and reports races between Qt's
+# threads inside Qt. Only races wholly inside Qt's libraries are suppressed;
+# a race with a frame in svgcheck or vectorfit is still reported.
+race:libQt6Core.so
+race:libQt6Gui.so
+race:libQt6DBus.so
+# The reports come from TSan's malloc/realloc interceptors called by Qt's
+# pool threads (QArrayData); called_from_lib is the form for interceptors
+# called from an uninstrumented library.
+called_from_lib:libQt6Core.so.6
+called_from_lib:libQt6Gui.so.6
+# Qt's pool threads finish but are not joined before the process exits
+# (the pool belongs to QGuiApplication's internals): reported as a thread
+# leak at exit, created in QThread::start.
+thread:QThread::start

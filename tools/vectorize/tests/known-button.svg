@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" width="80" height="80" viewBox="0 0 80 80">
+  <!-- A known design for the tests: a translucent top-lit disc whose stops
+       change opacity, a ring with a radial profile over it. -->
+  <defs>
+    <linearGradient id="face" gradientUnits="userSpaceOnUse" x1="0" y1="10" x2="0" y2="70">
+      <stop offset="0" stop-color="#ff8040" stop-opacity="0.9"/>
+      <stop offset="0.5" stop-color="#40a0ff" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#202020" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="rim" gradientUnits="userSpaceOnUse" cx="40" cy="40" r="30">
+      <stop offset="0.8" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="0.9" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#303030" stop-opacity="1"/>
+    </radialGradient>
+  </defs>
+  <circle cx="40" cy="40" r="30" fill="url(#face)"/>
+  <path fill-rule="evenodd" fill="url(#rim)" d="M10,40 A30,30 0 1,1 70,40 A30,30 0 1,1 10,40 Z M16,40 A24,24 0 1,1 64,40 A24,24 0 1,1 16,40 Z"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" width="60" height="60" viewBox="0 0 60 60">
+  <!-- A known design for the tests: a square with a soft dark glow round it. -->
+  <defs>
+    <linearGradient id="t" gradientUnits="userSpaceOnUse" x1="0" y1="20" x2="0" y2="12"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></linearGradient>
+    <linearGradient id="b" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="48"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></linearGradient>
+    <linearGradient id="l" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="12" y2="0"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></linearGradient>
+    <linearGradient id="r" gradientUnits="userSpaceOnUse" x1="40" y1="0" x2="48" y2="0"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></linearGradient>
+    <radialGradient id="c1" gradientUnits="userSpaceOnUse" cx="20" cy="20" r="8"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="c2" gradientUnits="userSpaceOnUse" cx="40" cy="20" r="8"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="c3" gradientUnits="userSpaceOnUse" cx="20" cy="40" r="8"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></radialGradient>
+    <radialGradient id="c4" gradientUnits="userSpaceOnUse" cx="40" cy="40" r="8"><stop offset="0" stop-color="#000000" stop-opacity="0.6"/><stop offset="1" stop-color="#000000" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="20" y="12" width="20" height="8" fill="url(#t)"/>
+  <rect x="20" y="40" width="20" height="8" fill="url(#b)"/>
+  <rect x="12" y="20" width="8" height="20" fill="url(#l)"/>
+  <rect x="40" y="20" width="8" height="20" fill="url(#r)"/>
+  <path fill="url(#c1)" d="M20,20 L12,20 A8,8 0 0,1 20,12 Z"/>
+  <path fill="url(#c2)" d="M40,20 L48,20 A8,8 0 0,0 40,12 Z"/>
+  <path fill="url(#c3)" d="M20,40 L12,40 A8,8 0 0,0 20,48 Z"/>
+  <path fill="url(#c4)" d="M40,40 L48,40 A8,8 0 0,1 40,48 Z"/>
+  <rect x="20" y="20" width="20" height="20" fill="#f0e8e4"/>
+</svg>
