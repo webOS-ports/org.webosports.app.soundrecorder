@@ -1,0 +1,3 @@
+module SoundRecorderApp
+FileOperations 1.0 FileOperations.qml
+LevelMeter 1.0 LevelMeter.qml
