@@ -51,10 +51,10 @@ Features
   touch and hold. **Swipe a recording away** to delete it: the row asks
   Delete / Cancel in place, as the legacy webOS lists did. Renaming never
   replaces another recording.
-- **Preferences** (app menu): format (MP3, FLAC, WAV), quality, input and
-  input level, and whether to keep the screen on while recording (off by
-  default; luna-displaymanager's `requestBlock`); the folder and the free
-  space.
+- **Preferences** (app menu): format and quality (see
+  [Recording formats](#recording-formats)), input and input level, and
+  whether to keep the screen on while recording (off by default;
+  luna-displaymanager's `requestBlock`); the folder and the free space.
 - **Privacy switch:** with the microphone switched off
   (org.webosports.service.killswitch) the app says so and does not record,
   and stops a running recording, keeping what it has.
@@ -71,16 +71,37 @@ Features
 Recordings are files in `/media/internal/Recordings`, named
 "Recording 2026-10-15 06.30.12.mp3" until renamed.
 
+Recording formats
+-----------------
+
+Pick one in Preferences; it applies to the next recording. MP3 is the
+default.
+
+| Format | File | Quality setting | Size, about | Good for |
+|---|---|---|---|---|
+| **MP3** | `.mp3` | Low, Normal, High, Very high | 0.4-0.7 MB a minute at Normal | everyday use; plays everywhere |
+| **FLAC** | `.flac` | none: lossless | 1-2 MB a minute | keeping every detail at a fraction of WAV's size |
+| **WAV** | `.wav` | none: uncompressed | 10.6 MB a minute | software that takes nothing else |
+
+Every recording is **stereo, 44.1 kHz** (WAV: 16-bit). The sizes were
+measured on the devices below, in a quiet room; MP3's and FLAC's grow with
+louder, busier sound. FLAC files from this recorder carry no length in
+their header: Sound Recorder keeps the length itself, but another player
+may not show it until it has read the whole file.
+
+Not offered, because Qt Multimedia's GStreamer backend cannot record them
+on LuneOS (measured on the mindphone, 2026-10-15):
+
+- **AAC / M4A** - it picks gst-droid's AAC encoder, which fails to start.
+- **Ogg Vorbis, Opus** - asking for either gives an Ogg file with FLAC in it.
+- **Mono** - it records two channels whatever is asked for.
+
 What it does not do, and why
 ----------------------------
 
 Measured on the mindphone and the TouchPad, 2026-10-15:
 
-- **No AAC/M4A, Ogg Vorbis or Opus.** Qt Multimedia's GStreamer backend
-  picks gst-droid's AAC encoder, which fails to start; asking for Vorbis or
-  Opus gives Ogg FLAC. MP3, FLAC and WAV come out as asked.
-- **No mono.** The same backend records two channels whatever
-  `MediaRecorder.audioChannelCount` says.
+- **No other formats, no mono:** see [Recording formats](#recording-formats).
 - **The level meter may stay hidden.** It listens on a second stream; the
   TouchPad's droid source gives that stream nothing while the recorder runs,
   and the strip then does not appear rather than suggesting a dead
@@ -90,8 +111,8 @@ Measured on the mindphone and the TouchPad, 2026-10-15:
 Tested on
 ---------
 
-Recording in all three formats, checked file by file (`tools/test-device.sh`),
-on 2026-10-15:
+Recording in MP3, FLAC and WAV, each file checked for its format, for
+sound and for its length (`tools/test-device.sh`), on 2026-10-15:
 
 | Device | Architecture | Screen |
 |---|---|---|
