@@ -1,0 +1,15 @@
+{
+    "appId": "org.webosports.app.soundrecorder",
+    "type": "regular",
+    "allowedNames": ["org.webosports.app.soundrecorder", "org.webosports.app.soundrecorder-*"],
+    "permissions": [
+        {
+            "service": "org.webosports.app.soundrecorder",
+            "outbound": ["*"]
+        },
+        {
+            "service": "org.webosports.app.soundrecorder-*",
+            "outbound": ["*"]
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "title": "Sound Recorder",
+    "id": "org.webosports.app.soundrecorder",
+    "version": "1.0.0",
+    "vendor": "webOS Ports",
+    "type": "qml",
+    "main": "qml/main.qml",
+    "noWindow": true,
+    "useWebEngine": false,
+    "useLuneOSStyle": true,
+    "icon": "icon.png",
+    "splashicon": "icon-256x256.png",
+    "uiRevision": "2",
+    "requiredPermissions": [ "sleep.operation", "killswitch.query", "systemsettings.query", "application.launcher", "appmanager.management" ],
+    "keywords": [ "Sound Recorder", "Voice recorder", "Voice memo", "Dictaphone", "Record", "Audio", "Microphone", "Recorder" ]
+}
