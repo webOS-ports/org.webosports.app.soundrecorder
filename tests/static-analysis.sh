@@ -32,9 +32,9 @@ TRIPLE=$(ls "$U/c++/$CXXV" | grep -- -linux | head -1)
 
 FLAGS="-std=c++17 -fPIC -nostdinc++ -isystem $U/c++/$CXXV -isystem $U/c++/$CXXV/$TRIPLE --sysroot=$SYSROOT
  -isystem $U -isystem $U/QtCore -isystem $U/QtQml -isystem $U/QtMultimedia -I$DIR"
-SOURCES="fileoperations.cpp audiopeak.cpp levelmeter.cpp plugin.cpp"
-HEADERS="fileoperations.h audiopeak.h levelmeter.h plugin.h"
-OURS='(fileoperations|audiopeak|levelmeter|plugin)[.](cpp|h)'
+SOURCES="fileoperations.cpp audiopeak.cpp levelmeter.cpp encoderranks.cpp plugin.cpp"
+HEADERS="fileoperations.h audiopeak.h levelmeter.h encoderranks.h plugin.h"
+OURS='(fileoperations|audiopeak|levelmeter|encoderranks|plugin)[.](cpp|h)'
 fail=0
 
 report() {

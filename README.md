@@ -1,9 +1,12 @@
 Sound Recorder
 ==============
 
-Records from the microphone, and plays, renames, sends and deletes what was
-recorded. A QML app for LuneOS in the LuneOS style (LuneOS.Forms), with the
-legacy webOS camera's record and stop buttons, redrawn as vectors.
+Summary
+-------
+Records from the microphone, and plays, renames, sends and deletes what was recorded.
+
+A QML app for LuneOS in the LuneOS style (LuneOS.Forms), with the legacy
+webOS camera's record and stop buttons, redrawn as vectors.
 
 Screenshots
 -----------
@@ -51,7 +54,7 @@ Features
   touch and hold. **Swipe a recording away** to delete it: the row asks
   Delete / Cancel in place, as the legacy webOS lists did. Renaming never
   replaces another recording.
-- **Preferences** (app menu): format and quality (see
+- **Preferences** (app menu): format, quality, stereo or mono (see
   [Recording formats](#recording-formats)), input and input level, and
   whether to keep the screen on while recording (off by default;
   luna-displaymanager's `requestBlock`); the folder and the free space.
@@ -64,9 +67,12 @@ Features
   - `{"target": "<file>"}` opens that recording's player, as the Files app
     opens a file (only recordings in the app's folder);
   - `{"page": "preferences"}` opens the preferences.
-- **Sharp at any size:** the buttons, the bezel and the icons are SVG,
-  redrawn from the legacy camera's bitmaps and measured against them
-  (`tools/vectorize`).
+- **Sharp at any size, quick to load:** the buttons, the bezel and the
+  icons are SVG, redrawn from the legacy camera's bitmaps and measured
+  against them (`tools/vectorize`). They are shown through LuneOS.Components'
+  `ArtworkImage`, which draws each once at the size shown and keeps it as
+  PNG (`/var/cache/xdg/luneos-components/artwork`), so later starts load
+  PNGs rather than drawing SVG.
 
 Recordings are files in `/media/internal/Recordings`, named
 "Recording 2026-10-15 06.30.12.mp3" until renamed.
@@ -74,34 +80,48 @@ Recordings are files in `/media/internal/Recordings`, named
 Recording formats
 -----------------
 
-Pick one in Preferences; it applies to the next recording. MP3 is the
-default.
+Pick one in Preferences, with the quality and stereo or mono; they apply
+to the next recording. MP3 is the default. Only the formats Qt Multimedia
+can write on the device are offered.
 
-| Format | File | Quality setting | Size, about | Good for |
-|---|---|---|---|---|
-| **MP3** | `.mp3` | Low, Normal, High, Very high | 0.4-0.7 MB a minute at Normal | everyday use; plays everywhere |
-| **FLAC** | `.flac` | none: lossless | 1-2 MB a minute | keeping every detail at a fraction of WAV's size |
-| **WAV** | `.wav` | none: uncompressed | 10.6 MB a minute | software that takes nothing else |
+| Format | File | Size at Normal, about | Good for |
+|---|---|---|---|
+| **MP3** | `.mp3` | 0.6 MB a minute | everyday use; plays everywhere |
+| **AAC** | `.m4a` | 1 MB a minute | plays nearly everywhere |
+| **Ogg Vorbis** | `.ogg` | 0.65 MB a minute | an open format |
+| **Opus** | `.opus` | 0.4 MB a minute | the smallest; an open format |
+| **FLAC** | `.flac` | 1-2 MB a minute | keeping every detail at a fraction of WAV's size |
+| **WAV** | `.wav` | 10.6 MB a minute | software that takes nothing else |
 
-Every recording is **stereo, 44.1 kHz** (WAV: 16-bit). The sizes were
-measured on the devices below, in a quiet room; MP3's and FLAC's grow with
-louder, busier sound. FLAC files from this recorder carry no length in
-their header: Sound Recorder keeps the length itself, but another player
-may not show it until it has read the whole file.
+Recordings are 44.1 kHz (Opus: 48 kHz; WAV: 16-bit), stereo unless mono
+is chosen. **Quality** (Low, Normal, High, Very high; not for FLAC and
+WAV) sets MP3's and Ogg Vorbis's variable bit rate and AAC's and Opus's
+bit rate; Normal is each encoder's own default. MP3 at Low came out at 42
+kbit/s, at Very high at 109 kbit/s.
 
-Not offered, because Qt Multimedia's GStreamer backend cannot record them
-on LuneOS (measured on the mindphone, 2026-10-15):
+The sizes were measured on the mindphone in a quiet room; MP3's, Ogg
+Vorbis's and FLAC's grow with louder, busier sound. FLAC files from this
+recorder carry no length in their header: Sound Recorder keeps the length
+itself, but another player may not show it until it has read the whole
+file.
 
-- **AAC / M4A** - it picks gst-droid's AAC encoder, which fails to start.
-- **Ogg Vorbis, Opus** - asking for either gives an Ogg file with FLAC in it.
-- **Mono** - it records two channels whatever is asked for.
+What it takes from LuneOS:
+
+- **AAC** is encoded with libav's encoder: the app ranks it above
+  gst-droid's, which fails to start on the devices tried
+  (`SoundRecorderApp/encoderranks.h`).
+- **Opus** needs GStreamer's `opusenc` (gst-plugins-base built with
+  `opus`); without it the app does not offer Opus.
+- **Quality and mono** need LuneOS's Qt Multimedia patch that hands them
+  to the encoder (`0006-gstreamer-mediarecorder-apply-the-audio-settings-to-the-encoder.patch`
+  in meta-luneos); without it every recording is stereo at the encoder's
+  defaults, whatever is chosen.
 
 What it does not do, and why
 ----------------------------
 
 Measured on the mindphone and the TouchPad, 2026-10-15:
 
-- **No other formats, no mono:** see [Recording formats](#recording-formats).
 - **The level meter may stay hidden.** It listens on a second stream; the
   TouchPad's droid source gives that stream nothing while the recorder runs,
   and the strip then does not appear rather than suggesting a dead
@@ -111,14 +131,14 @@ Measured on the mindphone and the TouchPad, 2026-10-15:
 Tested on
 ---------
 
-Recording in MP3, FLAC and WAV, each file checked for its format, for
-sound and for its length (`tools/test-device.sh`), on 2026-10-15:
+Recording in each format, each file checked for its format, for sound
+and for its length (`tools/test-device.sh`), on 2026-10-15:
 
-| Device | Architecture | Screen |
-|---|---|---|
-| mindphone | armv7 | 480x800 |
-| HP TouchPad | armv7 | 1024x768 |
-| Q25 | aarch64 | 720x720 |
+| Device | Architecture | Screen | Formats |
+|---|---|---|---|
+| mindphone | armv7 | 480x800 | MP3, AAC, Ogg Vorbis, Opus, FLAC, WAV; mono; quality |
+| HP TouchPad | armv7 | 1024x768 | MP3, FLAC, WAV |
+| Q25 | aarch64 | 720x720 | MP3, FLAC, WAV |
 
 How it fits together
 --------------------
@@ -134,8 +154,9 @@ How it fits together
 - `SoundRecorderApp/`: the C++ QML plugin for what QML cannot do:
   `FileOperations` (list, rename without replacing, delete - confined to the
   recordings folder) and `LevelMeter` (QAudioSource, peak per buffer).
-- `qml/images/*.svg`, `icon.png`: the legacy camera's buttons as vectors;
-  see [tools/vectorize/README.md](tools/vectorize/README.md).
+- `qml/images/*.svg`, `icon.png`: the legacy camera's buttons as vectors,
+  shown with `ArtworkImage` (`qml/components/ArtworkButton.qml`); see
+  [tools/vectorize/README.md](tools/vectorize/README.md).
 
 Building
 --------

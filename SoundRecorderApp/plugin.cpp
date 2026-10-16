@@ -15,6 +15,7 @@
  */
 
 #include "plugin.h"
+#include "encoderranks.h"
 #include "fileoperations.h"
 #include "levelmeter.h"
 
@@ -23,6 +24,10 @@
 void SoundRecorderAppPlugin::registerTypes(const char *uri)
 {
     Q_ASSERT(uri == QLatin1String("SoundRecorderApp"));
+
+    // Before Qt Multimedia starts GStreamer: main.qml imports this plugin,
+    // and the recorder is only made afterwards.
+    EncoderRanks::apply();
 
     // @uri SoundRecorderApp
     qmlRegisterType<FileOperations>(uri, 1, 0, "FileOperations");

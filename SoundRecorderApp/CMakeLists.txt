@@ -1,9 +1,11 @@
-# The app's QML plugin: the file work and the level meter (see the headers).
+# The app's QML plugin: the file work, the level meter and the encoder
+# ranks (see the headers).
 add_library(soundrecorder-qml MODULE
     plugin.cpp plugin.h
     fileoperations.cpp fileoperations.h
     levelmeter.cpp levelmeter.h
     audiopeak.cpp audiopeak.h
+    encoderranks.cpp encoderranks.h
 )
 
 # So the plugin can be found next to its qmldir when running from the build tree.

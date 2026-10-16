@@ -16,26 +16,36 @@
 
 import QtQuick
 
+import LuneOS.Components 1.0
+
 /*
- * A button drawn from two SVGs, its normal and its pressed look. Rendered
- * at the size it is shown at, so it is sharp at any scale (the legacy
- * camera's buttons, redrawn as vectors: tools/vectorize).
+ * A button drawn from the app's artwork (qml/images, the legacy camera's
+ * buttons redrawn as vectors: tools/vectorize): "<image>.svg" normally and
+ * "<image>-pressed.svg" while it is held. LuneOS.Components' ArtworkImage
+ * draws each once at the size shown and keeps it as PNG; both are loaded up
+ * front, so the first press does not wait for its picture.
  */
 Item {
     id: button
 
-    property url source
-    property url pressedSource
+    /// The artwork's name in qml/images, without "-pressed" or ".svg".
+    property string image
     readonly property alias pressed: area.pressed
 
     signal clicked()
 
-    Image {
+    ArtworkImage {
+        objectName: "normalImage"
         anchors.fill: parent
-        source: area.pressed && button.pressedSource.toString() !== "" ? button.pressedSource : button.source
-        sourceSize: Qt.size(Math.ceil(button.width), Math.ceil(button.height))
-        smooth: true
-        asynchronous: false
+        svg: button.image ? Qt.resolvedUrl("../images/" + button.image + ".svg") : ""
+        visible: !area.pressed
+    }
+
+    ArtworkImage {
+        objectName: "pressedImage"
+        anchors.fill: parent
+        svg: button.image ? Qt.resolvedUrl("../images/" + button.image + "-pressed.svg") : ""
+        visible: area.pressed
     }
 
     MouseArea {

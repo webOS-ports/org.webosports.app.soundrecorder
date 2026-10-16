@@ -32,6 +32,8 @@ Settings {
 
     property string format: "mp3"
     property int quality: MediaRecorder.NormalQuality
+    // 2 for stereo, 1 for mono.
+    property int channels: 2
     property string inputId: ""
     property real inputVolume: 1.0
     // Off by default: the screen is what uses the battery.
