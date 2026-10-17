@@ -17,6 +17,7 @@
 import QtQuick
 import QtTest
 
+import LuneOS.Components 1.0
 import "../../qml/js/Recordings.js" as Recordings
 
 /*
@@ -76,13 +77,13 @@ TestCase {
         compare(Recordings.extensionOf("/a/b.c/noext"), "");
         // A leading dot is a hidden file, not an extension.
         compare(Recordings.extensionOf("/a/.hidden"), "");
-        compare(Recordings.fileNameOf("/a/b/c d.mp3"), "c d.mp3");
-        compare(Recordings.fileNameOf("plain.wav"), "plain.wav");
-        compare(Recordings.displayName("/a/Meeting 3.2.mp3"), "Meeting 3.2");
-        compare(Recordings.displayName("/a/noext"), "noext");
-        compare(Recordings.directoryOf("/media/internal/Recordings/x.mp3"), "/media/internal/Recordings");
-        compare(Recordings.directoryOf("/x.mp3"), "/");
-        compare(Recordings.directoryOf("x.mp3"), "");
+        compare(FileLists.fileName("/a/b/c d.mp3"), "c d.mp3");
+        compare(FileLists.fileName("plain.wav"), "plain.wav");
+        compare(FileLists.displayName("/a/Meeting 3.2.mp3"), "Meeting 3.2");
+        compare(FileLists.displayName("/a/noext"), "noext");
+        compare(FileLists.folderOf("/media/internal/Recordings/x.mp3"), "/media/internal/Recordings");
+        compare(FileLists.folderOf("/x.mp3"), "/");
+        compare(FileLists.folderOf("x.mp3"), "");
     }
 
     function test_defaultName() {
@@ -138,31 +139,31 @@ TestCase {
     }
 
     function test_formatSize() {
-        compare(Recordings.formatSize(0), "0 bytes");
-        compare(Recordings.formatSize(1), "1 byte");
-        compare(Recordings.formatSize(1023), "1023 bytes");
-        compare(Recordings.formatSize(880640), "860 KB");
-        compare(Recordings.formatSize(1258291), "1.2 MB");
-        compare(Recordings.formatSize(3 * 1024 * 1024 * 1024), "3.00 GB");
+        compare(FileLists.formatSize(0), "0 B");
+        compare(FileLists.formatSize(1), "1 B");
+        compare(FileLists.formatSize(1023), "1023 B");
+        compare(FileLists.formatSize(880640), "860 KB");
+        compare(FileLists.formatSize(1258291), "1.2 MB");
+        compare(FileLists.formatSize(3 * 1024 * 1024 * 1024), "3 GB");
     }
 
     function test_formatWhen() {
         var now = new Date(2026, 9, 15, 9, 0, 0);
-        compare(Recordings.formatWhen(new Date(2026, 9, 15, 6, 30), now, true), "Today 06:30");
-        compare(Recordings.formatWhen(new Date(2026, 9, 15, 18, 5), now, false), "Today 6:05 PM");
-        compare(Recordings.formatWhen(new Date(2026, 9, 15, 0, 5), now, false), "Today 12:05 AM");
-        compare(Recordings.formatWhen(new Date(2026, 9, 14, 23, 59), now, true), "Yesterday 23:59");
-        compare(Recordings.formatWhen(new Date(2026, 9, 12, 10, 0), now, true), "12 Oct");
-        compare(Recordings.formatWhen(new Date(2025, 11, 31, 10, 0), now, true), "31 Dec 2025");
+        compare(FileLists.formatWhen(new Date(2026, 9, 15, 6, 30), now, true), "Today 06:30");
+        compare(FileLists.formatWhen(new Date(2026, 9, 15, 18, 5), now, false), "Today 6:05 PM");
+        compare(FileLists.formatWhen(new Date(2026, 9, 15, 0, 5), now, false), "Today 12:05 AM");
+        compare(FileLists.formatWhen(new Date(2026, 9, 14, 23, 59), now, true), "Yesterday 23:59");
+        compare(FileLists.formatWhen(new Date(2026, 9, 12, 10, 0), now, true), "12 Oct");
+        compare(FileLists.formatWhen(new Date(2025, 11, 31, 10, 0), now, true), "31 Dec 2025");
         // Yesterday across a month boundary.
-        compare(Recordings.formatWhen(new Date(2026, 8, 30, 8, 0), new Date(2026, 9, 1, 8, 0), true), "Yesterday 08:00");
+        compare(FileLists.formatWhen(new Date(2026, 8, 30, 8, 0), new Date(2026, 9, 1, 8, 0), true), "Yesterday 08:00");
     }
 
     function test_matches() {
-        verify(Recordings.matches("Lecture 3 physics", ""));
-        verify(Recordings.matches("Lecture 3 physics", "LECTURE"));
-        verify(Recordings.matches("Lecture 3 physics", "physics lec"));
-        verify(!Recordings.matches("Lecture 3 physics", "chemistry"));
+        verify(FileLists.matches("Lecture 3 physics", ""));
+        verify(FileLists.matches("Lecture 3 physics", "LECTURE"));
+        verify(FileLists.matches("Lecture 3 physics", "physics lec"));
+        verify(!FileLists.matches("Lecture 3 physics", "chemistry"));
     }
 
     function test_sortNewestFirst() {

@@ -61,7 +61,7 @@ AppPage {
     // Not the one being recorded: it is not finished, and shows as 0 bytes.
     readonly property var shownFiles: files.filter(function(f) {
         return f.path !== page.recorder.currentPath
-                && Recordings.matches(Recordings.displayName(f.path), searchField.text);
+                && FileLists.matches(FileLists.displayName(f.path), searchField.text);
     })
 
     function reload() {
@@ -123,16 +123,16 @@ AppPage {
         if (openPath === file.path)
             closePlayer();
         if (!fileOps.remove(file.path)) {
-            appWindow.notice = "Could not delete " + Recordings.displayName(file.path) + ".";
+            appWindow.notice = "Could not delete " + FileLists.displayName(file.path) + ".";
             return;
         }
-        appWindow.durations.setDuration(Recordings.fileNameOf(file.path), 0);
+        appWindow.durations.setDuration(FileLists.fileName(file.path), 0);
         reload();
     }
 
     function renameFile(file, newName) {
         var name = Recordings.sanitizeName(newName);
-        if (name === "" || name === Recordings.displayName(file.path))
+        if (name === "" || name === FileLists.displayName(file.path))
             return;
         var wasOpen = openPath === file.path;
         if (wasOpen)
@@ -142,7 +142,7 @@ AppPage {
             appWindow.notice = "There is already a recording called “" + name + "”.";
             return;
         }
-        appWindow.durations.renameDuration(Recordings.fileNameOf(file.path), Recordings.fileNameOf(renamed));
+        appWindow.durations.renameDuration(FileLists.fileName(file.path), FileLists.fileName(renamed));
         reload();
         if (wasOpen)
             togglePlayer(renamed);
@@ -155,8 +155,8 @@ AppPage {
         // Learn the length of recordings made before durations were kept,
         // or copied in from elsewhere.
         onDurationChanged: {
-            if (duration > 0 && page.openPath !== "" && appWindow.durations.durationOf(Recordings.fileNameOf(page.openPath)) <= 0) {
-                appWindow.durations.setDuration(Recordings.fileNameOf(page.openPath), duration);
+            if (duration > 0 && page.openPath !== "" && appWindow.durations.durationOf(FileLists.fileName(page.openPath)) <= 0) {
+                appWindow.durations.setDuration(FileLists.fileName(page.openPath), duration);
                 page.files = page.files.slice();
             }
         }
@@ -276,7 +276,7 @@ AppPage {
                         count: list.count
                         open: page.openPath === modelData.path
                         durationMs: open && audioPlayer.duration > 0 ? audioPlayer.duration
-                                    : appWindow.durations.durationOf(Recordings.fileNameOf(modelData.path))
+                                    : appWindow.durations.durationOf(FileLists.fileName(modelData.path))
                         player: audioPlayer
                         use24h: appWindow.use24h
 
@@ -348,7 +348,7 @@ AppPage {
         id: renameDialog
 
         function open() {
-            defaultValue = page.menuFile ? Recordings.displayName(page.menuFile.path) : "";
+            defaultValue = page.menuFile ? FileLists.displayName(page.menuFile.path) : "";
             visible = true;
         }
 
@@ -367,7 +367,7 @@ AppPage {
 
         visible: false
         title: "Delete recording"
-        message: page.menuFile ? "Delete “" + Recordings.displayName(page.menuFile.path) + "”? This cannot be undone." : ""
+        message: page.menuFile ? "Delete “" + FileLists.displayName(page.menuFile.path) + "”? This cannot be undone." : ""
         onAccepted: {
             visible = false;
             if (page.menuFile)
@@ -382,17 +382,17 @@ AppPage {
         visible: false
         dialogHeight: Units.gu(26)
         dialogWidth: Math.min(Units.gu(40), page.width - Units.gu(4))
-        title: page.menuFile ? Recordings.displayName(page.menuFile.path) : ""
+        title: page.menuFile ? FileLists.displayName(page.menuFile.path) : ""
         message: {
             if (!page.menuFile)
                 return "";
             var f = page.menuFile;
             var format = Recordings.formatForPath(f.path);
-            var ms = appWindow.durations.durationOf(Recordings.fileNameOf(f.path));
+            var ms = appWindow.durations.durationOf(FileLists.fileName(f.path));
             return "Recorded: " + new Date(f.modified).toLocaleString(Qt.locale(), Locale.ShortFormat)
                     + "\nLength: " + (ms > 0 ? Recordings.formatDuration(ms) : "unknown")
                     + "\nFormat: " + (format ? format.label : Recordings.extensionOf(f.path))
-                    + "\nSize: " + Recordings.formatSize(f.size)
+                    + "\nSize: " + FileLists.formatSize(f.size)
                     + "\nFile: " + f.path;
         }
         onAccepted: visible = false
