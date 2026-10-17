@@ -15,6 +15,7 @@
  */
 
 import QtCore
+import LuneOS.Components 1.0
 
 /*
  * How long each recording is, by file name: written when a recording is
@@ -23,8 +24,8 @@ import QtCore
  * its header, and opening every file to ask would be slow.
  */
 Settings {
-    location: StandardPaths.writableLocation(StandardPaths.GenericConfigLocation)
-              + "/org.webosports.app.soundrecorder/preferences.ini"
+    // In the app's own file, as every QML app has (LuneOS.Components' AppFiles).
+    location: AppFiles.preferencesFile("org.webosports.app.soundrecorder")
     category: "durations"
 
     function durationOf(fileName) {

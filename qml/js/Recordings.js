@@ -15,11 +15,13 @@
  */
 
 .pragma library
+.import LuneOS.Components 1.0 as LC
 
 /*
  * What the app knows about recordings that is not QML: names, formats,
  * times. No QML types in here, so tests/qml/tst_recordings.qml checks all
- * of it on the build host.
+ * of it on the build host. File names, folders, sizes, days and search are
+ * LuneOS.Components' FileLists, as in the other apps.
  */
 
 /*
@@ -89,31 +91,8 @@ function mimeForPath(path) {
 
 // ".mp3" for "/a/b/Talk.MP3": lower case, with the dot; "" without one.
 function extensionOf(path) {
-    var name = fileNameOf(path);
-    var dot = name.lastIndexOf(".");
-    return dot > 0 ? name.substring(dot).toLowerCase() : "";
-}
-
-function fileNameOf(path) {
-    var s = String(path);
-    return s.substring(s.lastIndexOf("/") + 1);
-}
-
-// The name the list shows: the file name without its extension.
-function displayName(path) {
-    var name = fileNameOf(path);
-    var dot = name.lastIndexOf(".");
-    return dot > 0 ? name.substring(0, dot) : name;
-}
-
-function directoryOf(path) {
-    var s = String(path);
-    var slash = s.lastIndexOf("/");
-    return slash > 0 ? s.substring(0, slash) : (slash === 0 ? "/" : "");
-}
-
-function pad2(n) {
-    return n < 10 ? "0" + n : "" + n;
+    var ext = LC.FileLists.extensionOf(path);
+    return ext !== "" ? "." + ext : "";
 }
 
 /*
@@ -122,6 +101,7 @@ function pad2(n) {
  * is copied to Windows. The date first, so names sort by time.
  */
 function defaultName(date) {
+    var pad2 = LC.FileLists.pad2;
     return "Recording " + date.getFullYear() + "-" + pad2(date.getMonth() + 1) + "-" + pad2(date.getDate())
             + " " + pad2(date.getHours()) + "." + pad2(date.getMinutes()) + "." + pad2(date.getSeconds());
 }
@@ -165,69 +145,10 @@ function uniqueName(base, ext, taken) {
  * ("00:07"), like the camera's.
  */
 function formatDuration(ms, timer) {
-    if (!(ms > 0))
-        ms = 0;
-    var total = Math.floor(ms / 1000);
-    var h = Math.floor(total / 3600);
-    var m = Math.floor(total / 60) % 60;
-    var s = total % 60;
-    if (h > 0)
-        return h + ":" + pad2(m) + ":" + pad2(s);
-    return (timer ? pad2(m) : "" + m) + ":" + pad2(s);
-}
-
-// "1.2 MB", "860 KB", "12 bytes".
-function formatSize(bytes) {
-    if (!(bytes > 0))
-        return "0 bytes";
-    if (bytes < 1024)
-        return bytes + (bytes === 1 ? " byte" : " bytes");
-    if (bytes < 1024 * 1024)
-        return Math.round(bytes / 1024) + " KB";
-    if (bytes < 1024 * 1024 * 1024)
-        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
-}
-
-function sameDay(a, b) {
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function clock(date, use24h) {
-    if (use24h)
-        return pad2(date.getHours()) + ":" + pad2(date.getMinutes());
-    var h = date.getHours() % 12;
-    return (h === 0 ? 12 : h) + ":" + pad2(date.getMinutes()) + (date.getHours() < 12 ? " AM" : " PM");
-}
-
-var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/*
- * When a recording was made, as the list shows it: "Today 06:30",
- * "Yesterday 18:02", "Mon 12 Oct", and the year only when it is not this
- * year's.
- */
-function formatWhen(date, now, use24h) {
-    if (sameDay(date, now))
-        return "Today " + clock(date, use24h);
-    var yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    if (sameDay(date, yesterday))
-        return "Yesterday " + clock(date, use24h);
-    var s = date.getDate() + " " + monthNames[date.getMonth()];
-    if (date.getFullYear() !== now.getFullYear())
-        s += " " + date.getFullYear();
-    return s;
-}
-
-// Does the search box's text match this recording? Every word must occur.
-function matches(name, query) {
-    var words = String(query).toLowerCase().split(/\s+/).filter(function(w) { return w !== ""; });
-    var n = String(name).toLowerCase();
-    for (var i = 0; i < words.length; i++) {
-        if (n.indexOf(words[i]) < 0)
-            return false;
-    }
-    return true;
+    var total = Math.floor((ms > 0 ? ms : 0) / 1000);
+    if (timer && total < 3600)
+        return LC.FileLists.pad2(Math.floor(total / 60)) + ":" + LC.FileLists.pad2(total % 60);
+    return LC.FileLists.formatClock(ms);
 }
 
 // Newest first, then by name, for files as FileOperations.list() gives them.

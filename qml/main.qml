@@ -25,6 +25,7 @@ import LuneOS.Forms 1.0
 
 import SoundRecorderApp 1.0
 
+import LuneOS.Components 1.0 as LC
 import "js/Recordings.js" as Recordings
 
 /*
@@ -95,7 +96,7 @@ AppWindow {
         inputVolume: preferences.inputVolume
 
         onSaved: function(path, durationMs) {
-            durationStore.setDuration(Recordings.fileNameOf(path), durationMs);
+            durationStore.setDuration(LC.FileLists.fileName(path), durationMs);
             appWindow.recordingsRevision++;
         }
         onFailed: function(path, reason) {
@@ -253,7 +254,7 @@ AppWindow {
     function sendByEmail(path) {
         launcher.launch("com.palm.app.email", {
             "newEmail": {
-                "summary": Recordings.displayName(path),
+                "summary": LC.FileLists.displayName(path),
                 "attachments": [{ "fullPath": path, "mimeType": Recordings.mimeForPath(path) }]
             }
         }, undefined, function(error) { appWindow.notice = "Could not open Email: " + error; });
@@ -288,7 +289,7 @@ AppWindow {
     // Back to the list and the recording's player open, if it is one of ours.
     function openRecording(target) {
         var path = String(target).replace(/^file:\/\//, "");
-        if (Recordings.directoryOf(path) !== recordingsPath || !fileOps.exists(path)) {
+        if (LC.FileLists.folderOf(path) !== recordingsPath || !fileOps.exists(path)) {
             notice = "Sound Recorder only plays its own recordings.";
             return;
         }

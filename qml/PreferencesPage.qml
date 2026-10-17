@@ -23,7 +23,7 @@ import QtQuick.Controls.LuneOS 2.0
 import LunaNext.Common 0.1
 import LuneOS.Forms 1.0
 
-import "js/Recordings.js" as Recordings
+import LuneOS.Components 1.0 as LC
 
 /*
  * How recordings are made: format, quality, stereo or mono, which
@@ -136,7 +136,7 @@ AppPage {
                     label: "Free"
                     value: {
                         var free = appWindow.fileOps.freeSpace();
-                        return free >= 0 ? Recordings.formatSize(free) : "Unknown";
+                        return free >= 0 ? LC.FileLists.formatSize(free) : "Unknown";
                     }
                 }
             }

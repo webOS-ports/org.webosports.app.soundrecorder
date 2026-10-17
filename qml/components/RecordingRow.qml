@@ -139,15 +139,15 @@ Item {
 
                     Label {
                         Layout.fillWidth: true
-                        text: Recordings.displayName(row.file.path)
+                        text: FileLists.displayName(row.file.path)
                         elide: Text.ElideRight
                         color: Colors.text
                         font.pixelSize: FontUtils.sizeToPixels("medium")
                     }
                     Label {
                         Layout.fillWidth: true
-                        text: Recordings.formatWhen(new Date(row.file.modified), new Date(), row.use24h)
-                              + " \u00b7 " + Recordings.formatSize(row.file.size)
+                        text: FileLists.formatWhen(new Date(row.file.modified), new Date(), row.use24h)
+                              + " \u00b7 " + FileLists.formatSize(row.file.size)
                         elide: Text.ElideRight
                         color: Colors.secondaryText
                         font.pixelSize: FontUtils.sizeToPixels("small")
