@@ -406,6 +406,28 @@ TestCase {
         verify(app.notice.indexOf("free space") >= 0, app.notice);
     }
 
+    // The notice under the header says what went wrong until its close
+    // key is tapped; the privacy switch's stays while the switch is on.
+    function test_notice_until_dismissed() {
+        createApp([]);
+        app.fileOps.free = 1024 * 1024;
+        verify(!app.startRecording());
+        var close = findChild(app.contentItem, "noticeCloseButton");
+        verify(close, "no notice");
+        tryVerify(function() { return close.visible; });
+        waitForRendering(app.contentItem);
+        mouseClick(close);
+        compare(app.notice, "");
+        verify(!close.visible);
+        app.micBlocked = true;
+        tryVerify(function() { return close.visible; });
+        waitForRendering(app.contentItem);
+        mouseClick(close);
+        verify(close.visible, "the privacy switch's notice went with the switch on");
+        app.micBlocked = false;
+        verify(!close.visible);
+    }
+
     function swipeRow(row, fraction) {
         mouseDrag(row, row.width * 0.2, row.height / 2 > 30 ? 30 : row.height / 2, row.width * fraction, 0, Qt.LeftButton, Qt.NoModifier, 5);
     }
