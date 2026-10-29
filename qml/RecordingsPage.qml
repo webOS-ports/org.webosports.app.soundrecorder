@@ -285,9 +285,9 @@ AppPage {
                             page.menuFile = modelData;
                             fileMenu.popup();
                         }
-                        onRenameClicked: { page.menuFile = modelData; renameDialog.open(); }
+                        onRenameClicked: { page.menuFile = modelData; page.askRename(); }
                         onSendClicked: appWindow.sendByEmail(modelData.path)
-                        onDeleteClicked: { page.menuFile = modelData; deleteDialog.visible = true; }
+                        onDeleteClicked: { page.menuFile = modelData; page.askDelete(); }
                         onSwipeDeleted: page.removeFile(modelData)
                     }
 
@@ -328,7 +328,7 @@ AppPage {
 
         MenuItem {
             text: "Rename"
-            onTriggered: renameDialog.open()
+            onTriggered: page.askRename()
         }
         MenuItem {
             text: "Send by Email"
@@ -340,40 +340,42 @@ AppPage {
         }
         MenuItem {
             text: "Delete"
-            onTriggered: deleteDialog.visible = true
+            onTriggered: page.askDelete()
         }
+    }
+
+    // Rename or delete the recording the menu or the player is about
+    // (menuFile), once the user says so.
+    function askRename() {
+        var file = menuFile;
+        if (!file)
+            return;
+        renameDialog.ask({
+            title: "Rename recording",
+            text: FileLists.displayName(file.path),
+            onAccepted: function(text) { page.renameFile(file, text); }
+        });
+    }
+
+    function askDelete() {
+        var file = menuFile;
+        if (!file)
+            return;
+        deleteDialog.ask({
+            title: "Delete recording",
+            message: "Delete “" + FileLists.displayName(file.path) + "”? This cannot be undone.",
+            onAccepted: function() { page.removeFile(file); }
+        });
     }
 
     PromptDialog {
         id: renameDialog
-
-        function open() {
-            defaultValue = page.menuFile ? FileLists.displayName(page.menuFile.path) : "";
-            visible = true;
-        }
-
         visible: false
-        title: "Rename recording"
-        onAccepted: function(text) {
-            visible = false;
-            if (page.menuFile)
-                page.renameFile(page.menuFile, text);
-        }
-        onRejected: visible = false
     }
 
     ConfirmDialog {
         id: deleteDialog
-
         visible: false
-        title: "Delete recording"
-        message: page.menuFile ? "Delete “" + FileLists.displayName(page.menuFile.path) + "”? This cannot be undone." : ""
-        onAccepted: {
-            visible = false;
-            if (page.menuFile)
-                page.removeFile(page.menuFile);
-        }
-        onRejected: visible = false
     }
 
     AlertDialog {

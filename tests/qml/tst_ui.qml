@@ -122,6 +122,35 @@ TestCase {
         return null;
     }
 
+    // The page's touch-and-hold menu: a Popup, among the objects of the
+    // page or of one of its items.
+    function popupOf(item) {
+        if (!item)
+            return null;
+        var objects = item.data || [];
+        for (var i = 0; i < objects.length; i++) {
+            var o = objects[i];
+            if (o && typeof o.popup === "function" && typeof o.itemAt === "function")
+                return o;
+        }
+        var kids = item.children || [];
+        for (var j = 0; j < kids.length; j++) {
+            var found = popupOf(kids[j]);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+
+    function menuItem(menu, text) {
+        for (var i = 0; i < menu.count; i++) {
+            if (menu.itemAt(i).text === text)
+                return menu.itemAt(i);
+        }
+        fail("no menu item " + text);
+        return null;
+    }
+
     // The dialog a button or field is in.
     function dialogOf(item) {
         while (item && (item.opened === undefined || item.dialogHeight === undefined))
@@ -250,8 +279,15 @@ TestCase {
         verify(!dialog.opened);
         compare(app.fileOps.files[0].name, "Recording 1.mp3");
 
+        // What was typed and cancelled is gone the next time.
         mouseClick(findButton(list().itemAtIndex(0), "Rename"));
         verify(dialog.opened);
+        field.text = "Something else";
+        mouseClick(findChild(page(), "promptRejectButton"));
+        verify(!dialog.opened);
+        mouseClick(findButton(list().itemAtIndex(0), "Rename"));
+        verify(dialog.opened);
+        compare(field.text, "Recording 1");
         field.text = "Lecture";
         mouseClick(findChild(page(), "promptAcceptButton"));
         verify(!dialog.opened);
@@ -286,6 +322,36 @@ TestCase {
         compare(app.fileOps.files.length, 1);
         compare(app.fileOps.files[0].name, "B.mp3");
         tryCompare(list(), "count", 1);
+    }
+
+    // The touch-and-hold menu's Rename and Delete ask the same.
+    function test_menu_rename_and_delete() {
+        createApp([file("A.mp3", 1), file("B.mp3", 2)]);
+        mouseClick(findChild(list().itemAtIndex(1), "moreButton"));
+        var menu = popupOf(page());
+        verify(menu, "no menu");
+        tryCompare(menu, "opened", true);
+        var item = menuItem(menu, "Rename");
+        mouseClick(item);
+        var field = findChild(page(), "promptField");
+        var prompt = dialogOf(field);
+        tryVerify(function() { return prompt.opened; });
+        compare(field.text, "B");
+        field.text = "C";
+        mouseClick(findChild(page(), "promptAcceptButton"));
+        verify(app.fileOps.files.some(function(f) { return f.name === "C.mp3"; }), "B not renamed to C");
+
+        mouseClick(findChild(list().itemAtIndex(0), "moreButton"));
+        tryCompare(menu, "opened", true);
+        item = menuItem(menu, "Delete");
+        mouseClick(item);
+        var accept = findChild(page(), "confirmAcceptButton");
+        var confirm = dialogOf(accept);
+        tryVerify(function() { return confirm.opened; });
+        compare(confirm.message, "Delete “A”? This cannot be undone.");
+        mouseClick(accept);
+        compare(app.fileOps.files.length, 1);
+        compare(app.fileOps.files[0].name, "C.mp3");
     }
 
     function test_rename_never_replaces_another_recording() {
