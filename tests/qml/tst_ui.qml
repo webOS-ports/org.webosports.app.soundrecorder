@@ -424,18 +424,34 @@ TestCase {
 
     function test_screen_kept_on_only_while_wanted() {
         createApp([]);
-        verify(!app.screenKeptOn);
-        // Recording with the setting on takes the display block, and
-        // stopping (or switching the setting off) lets it go.
-        app.updateScreenBlock(true);
-        verify(app.screenBlockCall !== null);
-        app.updateScreenBlock(true);
-        app.updateScreenBlock(false);
-        compare(app.screenBlockCall, null);
-        app.updateScreenBlock(false);
-        compare(app.screenBlockCall, null);
-        // Off by default.
+        var keeper = app.screenKeeper;
+        var calls = [];
+        var cancelled = 0;
+        keeper.subscribe = function(uri, json, onReply, onError) {
+            calls.push({ uri: uri, args: JSON.parse(json) });
+            return { cancel: function() { cancelled++; } };
+        };
+        // Off by default, and the setting alone, without a recording, does
+        // not hold the screen.
         compare(app.prefs.keepScreenOn, false);
+        verify(!app.screenKeptOn);
+        app.prefs.keepScreenOn = true;
+        verify(!app.screenKeptOn);
+        verify(!keeper.active);
+        compare(calls.length, 0);
+        app.prefs.keepScreenOn = false;
+        // Recording with the setting on takes the display block once, and
+        // stopping (or switching the setting off) lets it go.
+        keeper.active = true;
+        compare(calls.length, 1);
+        compare(calls[0].uri, "luna://com.palm.display/control/setProperty");
+        compare(calls[0].args, { "requestBlock": true, "client": "org.webosports.app.soundrecorder" });
+        verify(keeper.blocked);
+        keeper.active = false;
+        compare(cancelled, 1);
+        verify(!keeper.blocked);
+        keeper.active = false;
+        compare(cancelled, 1);
     }
 
     function test_app_menu_opens_at_the_top_of_the_window() {
