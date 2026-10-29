@@ -35,6 +35,22 @@ TestCase {
 
     property var app: null
     readonly property string root: "/test/Recordings"
+    // The states the tests pass through, as pictures:
+    // build/test-output/ui/<width>x<height>-<state>.png.
+    readonly property string shotDir: decodeURIComponent(Qt.resolvedUrl("../../build/test-output/ui").toString()
+                                                         .replace(/^file:\/\//, ""))
+
+    function shot(name) {
+        var done = false;
+        var saved = false;
+        var ok = app.contentItem.grabToImage(function(result) {
+            saved = result.saveToFile(shotDir + "/" + app.width + "x" + app.height + "-" + name + ".png");
+            done = true;
+        });
+        verify(ok, "grab " + name);
+        tryVerify(function() { return done; }, 5000, "grabbed " + name);
+        verify(saved, "could not save " + name + " in " + shotDir);
+    }
 
     function file(name, minutesAgo, size) {
         return { path: root + "/" + name, name: name, size: size || 1000,
@@ -87,6 +103,41 @@ TestCase {
 
     function list() {
         return findChild(page(), "recordingsList");
+    }
+
+    // A shown button by its words, as the user finds it.
+    function findButton(item, text) {
+        if (!item)
+            return null;
+        if (item.text === text && item.visible && item.clicked !== undefined)
+            return item;
+        var kids = item.children || [];
+        for (var i = 0; i < kids.length; i++) {
+            var found = findButton(kids[i], text);
+            if (found)
+                return found;
+        }
+        if (item.contentItem && item.contentItem !== item)
+            return findButton(item.contentItem, text);
+        return null;
+    }
+
+    // The dialog a button or field is in.
+    function dialogOf(item) {
+        while (item && (item.opened === undefined || item.dialogHeight === undefined))
+            item = item.parent;
+        return item;
+    }
+
+    // The player open under the first recording, with its Rename, Send and
+    // Delete.
+    function openFirstPlayer() {
+        var row = list().itemAtIndex(0);
+        mouseClick(row, row.width / 2, Units.gu(3));
+        tryVerify(function() { return findButton(row, "Delete") !== null; });
+        // Grown, and scrolled to.
+        wait(400);
+        return row;
     }
 
     function test_empty_list_says_how_to_start() {
@@ -172,6 +223,69 @@ TestCase {
         page().renameFile(page().files[0], "  Lecture/3  ");
         compare(app.fileOps.files[0].name, "Lecture 3.mp3");
         compare(app.notice, "");
+    }
+
+    function test_rename_dialog_data() {
+        return [
+            { tag: "phone 480x800", w: 480, h: 800 },
+            { tag: "Q25 720x720", w: 720, h: 720 }
+        ];
+    }
+
+    // The player's Rename asks for the name, the recording's own to start
+    // with; Cancel keeps it, the dialog's OK renames.
+    function test_rename_dialog(data) {
+        createApp([file("Recording 1.mp3", 1)], data.w, data.h);
+        var row = openFirstPlayer();
+        mouseClick(findButton(row, "Rename"));
+        var field = findChild(page(), "promptField");
+        verify(field, "no rename dialog");
+        var dialog = dialogOf(field);
+        verify(dialog.opened, "the rename dialog is not open");
+        compare(dialog.title, "Rename recording");
+        compare(field.text, "Recording 1");
+        wait(50);
+        shot("rename-dialog");
+        mouseClick(findChild(page(), "promptRejectButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files[0].name, "Recording 1.mp3");
+
+        mouseClick(findButton(list().itemAtIndex(0), "Rename"));
+        verify(dialog.opened);
+        field.text = "Lecture";
+        mouseClick(findChild(page(), "promptAcceptButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files[0].name, "Lecture.mp3");
+    }
+
+    function test_delete_dialog_data() {
+        return test_rename_dialog_data();
+    }
+
+    // The player's Delete asks first, naming the recording; Cancel keeps it.
+    function test_delete_dialog(data) {
+        createApp([file("A.mp3", 1), file("B.mp3", 2)], data.w, data.h);
+        var row = openFirstPlayer();
+        mouseClick(findButton(row, "Delete"));
+        var accept = findChild(page(), "confirmAcceptButton");
+        verify(accept, "no delete dialog");
+        var dialog = dialogOf(accept);
+        verify(dialog.opened, "the delete dialog is not open");
+        compare(dialog.title, "Delete recording");
+        compare(dialog.message, "Delete “A”? This cannot be undone.");
+        wait(50);
+        shot("delete-dialog");
+        mouseClick(findChild(page(), "confirmRejectButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files.length, 2);
+
+        mouseClick(findButton(list().itemAtIndex(0), "Delete"));
+        verify(dialog.opened);
+        mouseClick(accept);
+        verify(!dialog.opened);
+        compare(app.fileOps.files.length, 1);
+        compare(app.fileOps.files[0].name, "B.mp3");
+        tryCompare(list(), "count", 1);
     }
 
     function test_rename_never_replaces_another_recording() {
