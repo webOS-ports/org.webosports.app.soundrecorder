@@ -162,7 +162,12 @@ Building
 --------
 
 CMake with the webOS modules, as every LuneOS app; needs Qt 6 Qml and
-Multimedia. For development on a device:
+Multimedia, and at run time a luneos-components with the parts the app
+uses: LuneOS.Components' `FileLists`, `AppFiles`, `ArtworkImage` and the
+`ask()` of `ConfirmDialog` and `PromptDialog`, LuneOS.Forms' `AppWindow`,
+`AppPage` and `StatusNotice`, and LuneOS.System's `KeepScreenOn`,
+`LaunchParams`, `AppLauncher`, `ServiceStatus` and `SystemPreferences`.
+For development on a device:
 
     cmake -S . -B build/arm -G Ninja -DCMAKE_TOOLCHAIN_FILE=<recipe workdir>/toolchain.cmake \
         -DQT_HOST_PATH=<recipe workdir>/recipe-sysroot-native/usr && ninja -C build/arm

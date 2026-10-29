@@ -35,6 +35,22 @@ TestCase {
 
     property var app: null
     readonly property string root: "/test/Recordings"
+    // The states the tests pass through, as pictures:
+    // build/test-output/ui/<width>x<height>-<state>.png.
+    readonly property string shotDir: decodeURIComponent(Qt.resolvedUrl("../../build/test-output/ui").toString()
+                                                         .replace(/^file:\/\//, ""))
+
+    function shot(name) {
+        var done = false;
+        var saved = false;
+        var ok = app.contentItem.grabToImage(function(result) {
+            saved = result.saveToFile(shotDir + "/" + app.width + "x" + app.height + "-" + name + ".png");
+            done = true;
+        });
+        verify(ok, "grab " + name);
+        tryVerify(function() { return done; }, 5000, "grabbed " + name);
+        verify(saved, "could not save " + name + " in " + shotDir);
+    }
 
     function file(name, minutesAgo, size) {
         return { path: root + "/" + name, name: name, size: size || 1000,
@@ -87,6 +103,70 @@ TestCase {
 
     function list() {
         return findChild(page(), "recordingsList");
+    }
+
+    // A shown button by its words, as the user finds it.
+    function findButton(item, text) {
+        if (!item)
+            return null;
+        if (item.text === text && item.visible && item.clicked !== undefined)
+            return item;
+        var kids = item.children || [];
+        for (var i = 0; i < kids.length; i++) {
+            var found = findButton(kids[i], text);
+            if (found)
+                return found;
+        }
+        if (item.contentItem && item.contentItem !== item)
+            return findButton(item.contentItem, text);
+        return null;
+    }
+
+    // The page's touch-and-hold menu: a Popup, among the objects of the
+    // page or of one of its items.
+    function popupOf(item) {
+        if (!item)
+            return null;
+        var objects = item.data || [];
+        for (var i = 0; i < objects.length; i++) {
+            var o = objects[i];
+            if (o && typeof o.popup === "function" && typeof o.itemAt === "function")
+                return o;
+        }
+        var kids = item.children || [];
+        for (var j = 0; j < kids.length; j++) {
+            var found = popupOf(kids[j]);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+
+    function menuItem(menu, text) {
+        for (var i = 0; i < menu.count; i++) {
+            if (menu.itemAt(i).text === text)
+                return menu.itemAt(i);
+        }
+        fail("no menu item " + text);
+        return null;
+    }
+
+    // The dialog a button or field is in.
+    function dialogOf(item) {
+        while (item && (item.opened === undefined || item.dialogHeight === undefined))
+            item = item.parent;
+        return item;
+    }
+
+    // The player open under the first recording, with its Rename, Send and
+    // Delete.
+    function openFirstPlayer() {
+        var row = list().itemAtIndex(0);
+        mouseClick(row, row.width / 2, Units.gu(3));
+        tryVerify(function() { return findButton(row, "Delete") !== null; });
+        // Grown, and scrolled to.
+        wait(400);
+        return row;
     }
 
     function test_empty_list_says_how_to_start() {
@@ -174,6 +254,106 @@ TestCase {
         compare(app.notice, "");
     }
 
+    function test_rename_dialog_data() {
+        return [
+            { tag: "phone 480x800", w: 480, h: 800 },
+            { tag: "Q25 720x720", w: 720, h: 720 }
+        ];
+    }
+
+    // The player's Rename asks for the name, the recording's own to start
+    // with; Cancel keeps it, the dialog's OK renames.
+    function test_rename_dialog(data) {
+        createApp([file("Recording 1.mp3", 1)], data.w, data.h);
+        var row = openFirstPlayer();
+        mouseClick(findButton(row, "Rename"));
+        var field = findChild(page(), "promptField");
+        verify(field, "no rename dialog");
+        var dialog = dialogOf(field);
+        verify(dialog.opened, "the rename dialog is not open");
+        compare(dialog.title, "Rename recording");
+        compare(field.text, "Recording 1");
+        wait(50);
+        shot("rename-dialog");
+        mouseClick(findChild(page(), "promptRejectButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files[0].name, "Recording 1.mp3");
+
+        // What was typed and cancelled is gone the next time.
+        mouseClick(findButton(list().itemAtIndex(0), "Rename"));
+        verify(dialog.opened);
+        field.text = "Something else";
+        mouseClick(findChild(page(), "promptRejectButton"));
+        verify(!dialog.opened);
+        mouseClick(findButton(list().itemAtIndex(0), "Rename"));
+        verify(dialog.opened);
+        compare(field.text, "Recording 1");
+        field.text = "Lecture";
+        mouseClick(findChild(page(), "promptAcceptButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files[0].name, "Lecture.mp3");
+    }
+
+    function test_delete_dialog_data() {
+        return test_rename_dialog_data();
+    }
+
+    // The player's Delete asks first, naming the recording; Cancel keeps it.
+    function test_delete_dialog(data) {
+        createApp([file("A.mp3", 1), file("B.mp3", 2)], data.w, data.h);
+        var row = openFirstPlayer();
+        mouseClick(findButton(row, "Delete"));
+        var accept = findChild(page(), "confirmAcceptButton");
+        verify(accept, "no delete dialog");
+        var dialog = dialogOf(accept);
+        verify(dialog.opened, "the delete dialog is not open");
+        compare(dialog.title, "Delete recording");
+        compare(dialog.message, "Delete “A”? This cannot be undone.");
+        wait(50);
+        shot("delete-dialog");
+        mouseClick(findChild(page(), "confirmRejectButton"));
+        verify(!dialog.opened);
+        compare(app.fileOps.files.length, 2);
+
+        mouseClick(findButton(list().itemAtIndex(0), "Delete"));
+        verify(dialog.opened);
+        mouseClick(accept);
+        verify(!dialog.opened);
+        compare(app.fileOps.files.length, 1);
+        compare(app.fileOps.files[0].name, "B.mp3");
+        tryCompare(list(), "count", 1);
+    }
+
+    // The touch-and-hold menu's Rename and Delete ask the same.
+    function test_menu_rename_and_delete() {
+        createApp([file("A.mp3", 1), file("B.mp3", 2)]);
+        mouseClick(findChild(list().itemAtIndex(1), "moreButton"));
+        var menu = popupOf(page());
+        verify(menu, "no menu");
+        tryCompare(menu, "opened", true);
+        var item = menuItem(menu, "Rename");
+        mouseClick(item);
+        var field = findChild(page(), "promptField");
+        var prompt = dialogOf(field);
+        tryVerify(function() { return prompt.opened; });
+        compare(field.text, "B");
+        field.text = "C";
+        mouseClick(findChild(page(), "promptAcceptButton"));
+        verify(app.fileOps.files.some(function(f) { return f.name === "C.mp3"; }), "B not renamed to C");
+
+        mouseClick(findChild(list().itemAtIndex(0), "moreButton"));
+        tryCompare(menu, "opened", true);
+        item = menuItem(menu, "Delete");
+        mouseClick(item);
+        var accept = findChild(page(), "confirmAcceptButton");
+        var confirm = dialogOf(accept);
+        tryVerify(function() { return confirm.opened; });
+        compare(confirm.message, "Delete “A”? This cannot be undone.");
+        mouseClick(accept);
+        compare(app.fileOps.files.length, 1);
+        compare(app.fileOps.files[0].name, "C.mp3");
+    }
+
     function test_rename_never_replaces_another_recording() {
         createApp([file("A.mp3", 1), file("B.mp3", 2)]);
         var a = page().files.filter(function(f) { return f.name === "A.mp3"; })[0];
@@ -224,6 +404,28 @@ TestCase {
         app.fileOps.free = 1024 * 1024;
         verify(!app.startRecording());
         verify(app.notice.indexOf("free space") >= 0, app.notice);
+    }
+
+    // The notice under the header says what went wrong until its close
+    // key is tapped; the privacy switch's stays while the switch is on.
+    function test_notice_until_dismissed() {
+        createApp([]);
+        app.fileOps.free = 1024 * 1024;
+        verify(!app.startRecording());
+        var close = findChild(app.contentItem, "noticeCloseButton");
+        verify(close, "no notice");
+        tryVerify(function() { return close.visible; });
+        waitForRendering(app.contentItem);
+        mouseClick(close);
+        compare(app.notice, "");
+        verify(!close.visible);
+        app.micBlocked = true;
+        tryVerify(function() { return close.visible; });
+        waitForRendering(app.contentItem);
+        mouseClick(close);
+        verify(close.visible, "the privacy switch's notice went with the switch on");
+        app.micBlocked = false;
+        verify(!close.visible);
     }
 
     function swipeRow(row, fraction) {
@@ -310,18 +512,34 @@ TestCase {
 
     function test_screen_kept_on_only_while_wanted() {
         createApp([]);
-        verify(!app.screenKeptOn);
-        // Recording with the setting on takes the display block, and
-        // stopping (or switching the setting off) lets it go.
-        app.updateScreenBlock(true);
-        verify(app.screenBlockCall !== null);
-        app.updateScreenBlock(true);
-        app.updateScreenBlock(false);
-        compare(app.screenBlockCall, null);
-        app.updateScreenBlock(false);
-        compare(app.screenBlockCall, null);
-        // Off by default.
+        var keeper = app.screenKeeper;
+        var calls = [];
+        var cancelled = 0;
+        keeper.subscribe = function(uri, json, onReply, onError) {
+            calls.push({ uri: uri, args: JSON.parse(json) });
+            return { cancel: function() { cancelled++; } };
+        };
+        // Off by default, and the setting alone, without a recording, does
+        // not hold the screen.
         compare(app.prefs.keepScreenOn, false);
+        verify(!app.screenKeptOn);
+        app.prefs.keepScreenOn = true;
+        verify(!app.screenKeptOn);
+        verify(!keeper.active);
+        compare(calls.length, 0);
+        app.prefs.keepScreenOn = false;
+        // Recording with the setting on takes the display block once, and
+        // stopping (or switching the setting off) lets it go.
+        keeper.active = true;
+        compare(calls.length, 1);
+        compare(calls[0].uri, "luna://com.palm.display/control/setProperty");
+        compare(calls[0].args, { "requestBlock": true, "client": "org.webosports.app.soundrecorder" });
+        verify(keeper.blocked);
+        keeper.active = false;
+        compare(cancelled, 1);
+        verify(!keeper.blocked);
+        keeper.active = false;
+        compare(cancelled, 1);
     }
 
     function test_app_menu_opens_at_the_top_of_the_window() {

@@ -11,13 +11,18 @@
   luneos-components' desktop stand-ins (`test/imports`) and
   `qml/imports/SoundRecorderApp`, a QML stand-in for the C++ plugin over
   files held in memory. Empty list, order, search, the player opening in
-  place, rename (cleaned names, never over another), delete, swipe to
-  delete (long swipe asks, Cancel keeps, short swipe springs back), the "…"
-  menu, the privacy switch and full storage refusing to record, the
+  place, rename (cleaned names, never over another), delete, the rename
+  and delete dialogs from the player and from the menu (Cancel keeps, OK
+  acts, a cancelled name is not offered again), swipe to delete (long
+  swipe asks, Cancel keeps, short swipe springs back), the "…" menu, the
+  notice's close key, the screen kept on (what the display manager is
+  asked, and let go), the privacy switch and full storage refusing to
+  record, the
   unfinished recording kept out of the list, preferences (offering the
   formats the recorder can write; mono and the quality reaching the
   recorder, no quality for lossless formats), and the layout at
-  320x480, 480x800, 720x720 and 1024x768.
+  320x480, 480x800, 720x720 and 1024x768. The dialogs are saved as
+  `build/test-output/ui/<width>x<height>-<state>.png`.
 
 luneos-components needs its desktop build (`CONFIG+=desktop`), with the
 LuneOS.Components plugin: its `image://artwork` provider draws the app's

@@ -8,10 +8,13 @@
 # README) for the style and LuneOS.Components plugins; the latter provides
 # image://artwork, which the app's buttons load through. A further
 # "-import <dir>" puts a build of either in <dir> ahead of the checkout's.
+# tst_ui saves the states it passes through as build/test-output/ui/
+# <width>x<height>-<state>.png.
 set -e
 cd "$(dirname "$0")/.."
 LC=${1:-../luneos-components}
 [ $# -gt 0 ] && shift
+mkdir -p build/test-output/ui
 CONF=$(mktemp -d)
 trap 'rm -rf "$CONF"' EXIT
 # The preferences and the artwork cache go to a throwaway directory, not the
