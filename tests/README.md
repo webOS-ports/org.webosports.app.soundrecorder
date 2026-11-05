@@ -3,6 +3,8 @@
 ## QML (`qml/`), on the build host
 
     tests/run-qml-tests.sh [path to luneos-components]
+    PROFILES=q25 tests/run-qml-tests.sh ...     the screens on one device only
+    TESTS= tests/run-qml-tests.sh ...           only the screens
 
 - `tst_recordings.qml`: `qml/js/Recordings.js` - names, formats (only
   those Qt can write offered, MP3 always, an unwritable stored one
@@ -20,9 +22,27 @@
   record, the
   unfinished recording kept out of the list, preferences (offering the
   formats the recorder can write; mono and the quality reaching the
-  recorder, no quality for lossless formats), and the layout at
-  320x480, 480x800, 720x720 and 1024x768. The dialogs are saved as
-  `build/test-output/ui/<width>x<height>-<state>.png`.
+  recorder, no quality for lossless formats), and the list giving way to
+  a recording on a short screen. Run once.
+- `tst_screens.qml`: every screen of the app, once per device screen in
+  `PROFILES` - by default the mindphone (480x800), the Q25 (720x720), the
+  TouchPad (1024x768) and the FuriPhone FLX1s (`radon`, 720x1600, with a
+  notch and rounded corners), each with its own grid unit. The stand-ins
+  read their profile once, as they load, so the script runs each against a
+  copy of `LunaNext/Common` whose default profile is that one. The screens:
+  the empty list, recordings, search and nothing found, a recording's
+  player, the "…" menu, details, the rename and delete dialogs, swipe to
+  delete, the notice, the privacy switch, the app menu, the preferences
+  (top and bottom), and a recording in progress, paused, and its
+  dashboard. Each is checked for what breaks a layout - shown, not empty,
+  inside the window, the record button inside its bar, the dialogs and
+  menus inside the window, the "…" menu at its button, the explanation
+  under the list readable on the page, nothing wider than it - and saved as
+  `build/test-output/ui/<profile>-<screen>.png`, with radon's notch and
+  corners painted over it (`PanelShape.qml`) to show what the panel hides.
+  The recording is a real one, from the build host's microphone through Qt
+  Multimedia, into `build/test-output/recordings` (removed after); it is
+  skipped on a host without one.
 
 luneos-components needs its desktop build (`CONFIG+=desktop`), with the
 LuneOS.Components plugin: its `image://artwork` provider draws the app's
