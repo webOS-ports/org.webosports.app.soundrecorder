@@ -36,7 +36,8 @@
   (top and bottom), and a recording in progress, paused, and its
   dashboard. Each is checked for what breaks a layout - shown, not empty,
   inside the window, the record button inside its bar, the dialogs and
-  menus inside the window, nothing wider than it - and saved as
+  menus inside the window, the "…" menu at its button, the explanation
+  under the list readable on the page, nothing wider than it - and saved as
   `build/test-output/ui/<profile>-<screen>.png`, with radon's notch and
   corners painted over it (`PanelShape.qml`) to show what the panel hides.
   The recording is a real one, from the build host's microphone through Qt

@@ -19,6 +19,7 @@ import QtQuick.Controls
 import QtTest
 
 import LunaNext.Common 0.1
+import LuneOS.Forms 1.0
 
 /*
  * Every screen of the app on one device's screen per run - the window is
@@ -250,12 +251,30 @@ TestCase {
         shot("empty");
     }
 
+    // The WCAG contrast ratio of two colours
+    function contrast(a, b) {
+        function lum(c) {
+            function lin(v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+            return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+        }
+        var la = lum(a), lb = lum(b);
+        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    }
+
     function test_recordings() {
         startApp(someFiles());
         checkMain();
         compare(list().count, 4);
         for (var i = 0; i < list().count; i++)
             onScreen(findChild(list().itemAtIndex(i), "moreButton"), "row " + i + "'s … button", true);
+        // The explanation, where it shows, readable on the foot of the
+        // page's gradient it sits on
+        var foot = page().footer;
+        if (foot.visible) {
+            onScreen(foot, "the explanation");
+            var c = contrast(foot.color, Colors.pageGradientBottom);
+            verify(c >= 3, "the explanation's " + foot.color + " on " + Colors.pageGradientBottom + ": contrast " + c.toFixed(2));
+        }
         shot("recordings");
     }
 
@@ -300,11 +319,19 @@ TestCase {
 
     function test_menu() {
         startApp(someFiles());
-        mouseClick(findChild(list().itemAtIndex(0), "moreButton"));
+        var more = findChild(list().itemAtIndex(0), "moreButton");
+        mouseClick(more);
         var menu = popupOf(page());
         verify(menu, "no menu");
         tryCompare(menu, "opened", true);
         popupFits(menu, "the menu");
+        // At the "…" button it was opened from: under it, right edges lined
+        // up (on a touch screen there is no pointer for it to open at)
+        var m = menu.parent.mapToItem(null, menu.x, menu.y);
+        var b = more.mapToItem(null, 0, 0);
+        verify(Math.abs(m.x + menu.width - (b.x + more.width)) <= 1 && Math.abs(m.y - (b.y + more.height)) <= 1,
+               "the menu at " + m.x + "," + m.y + " (" + menu.width + " wide), not under the … button at "
+               + b.x + "," + b.y + " (" + more.width + "x" + more.height + ")");
         shot("menu");
         menu.close();
     }

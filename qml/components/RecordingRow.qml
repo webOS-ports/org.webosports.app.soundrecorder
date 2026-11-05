@@ -50,6 +50,9 @@ Item {
     // Swiped away and confirmed in the row: delete without asking again.
     signal swipeDeleted()
 
+    // The "…" button: the menu held() asks for opens at it
+    readonly property Item menuButton: moreButton
+
     readonly property bool playing: open && player && player.playbackState === MediaPlayer.PlayingState
 
     height: summary.height + (open ? controls.implicitHeight + Units.gu(1) : 0)
@@ -163,6 +166,7 @@ Item {
                 // The things to do with it, without having to know about
                 // touch and hold.
                 ToolButton {
+                    id: moreButton
                     objectName: "moreButton"
                     Layout.preferredWidth: Units.gu(5)
                     Layout.preferredHeight: Units.gu(5)

@@ -43,6 +43,15 @@ AppPage {
                : files.length > 0 ? "Tap a recording to play it, swipe it away to delete it."
                : ""
 
+    // The explanation is at the foot of the page, under the record bar,
+    // where the page's gradient is at its darkest: the theme's grey for
+    // secondary text all but disappears on it, its text colour does not.
+    Binding {
+        target: page.footer
+        property: "color"
+        value: Colors.text
+    }
+
     readonly property var recorder: appWindow.recorder
     // Room for the list under the recording panel? On a short screen (the
     // Q25's square) it would be a sliver with a cut-off heading, so while
@@ -281,9 +290,16 @@ AppPage {
                         use24h: appWindow.use24h
 
                         onTapped: page.togglePlayer(modelData.path)
+                        // Under the row's "…" button, right edges lined up:
+                        // popup() with no position opens at the pointer, and
+                        // a touch screen has none - on Wayland that is the
+                        // window's top-left corner. The menu measures its
+                        // width as it opens, so it moves left once it has.
                         onHeld: {
                             page.menuFile = modelData;
-                            fileMenu.popup();
+                            var at = menuButton.mapToItem(fileMenu.parent, menuButton.width, menuButton.height);
+                            fileMenu.popup(at.x, at.y);
+                            fileMenu.x = at.x - fileMenu.width;
                         }
                         onRenameClicked: { page.menuFile = modelData; page.askRename(); }
                         onSendClicked: appWindow.sendByEmail(modelData.path)
