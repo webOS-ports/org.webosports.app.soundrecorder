@@ -41,7 +41,9 @@ Rectangle {
     signal pauseClicked()
     signal resumeClicked()
 
-    height: compact ? Units.gu(9.5) : Units.gu(12)
+    // Implicit, as the page's ColumnLayout sizes it by that: a plain height
+    // left it what the list did not take, shorter than its buttons.
+    implicitHeight: compact ? Units.gu(9.5) : Units.gu(12)
     gradient: Gradient {
         GradientStop { position: 0.0; color: "#3a3a3a" }
         GradientStop { position: 0.08; color: "#202020" }
