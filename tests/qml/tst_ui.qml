@@ -35,22 +35,6 @@ TestCase {
 
     property var app: null
     readonly property string root: "/test/Recordings"
-    // The states the tests pass through, as pictures:
-    // build/test-output/ui/<width>x<height>-<state>.png.
-    readonly property string shotDir: decodeURIComponent(Qt.resolvedUrl("../../build/test-output/ui").toString()
-                                                         .replace(/^file:\/\//, ""))
-
-    function shot(name) {
-        var done = false;
-        var saved = false;
-        var ok = app.contentItem.grabToImage(function(result) {
-            saved = result.saveToFile(shotDir + "/" + app.width + "x" + app.height + "-" + name + ".png");
-            done = true;
-        });
-        verify(ok, "grab " + name);
-        tryVerify(function() { return done; }, 5000, "grabbed " + name);
-        verify(saved, "could not save " + name + " in " + shotDir);
-    }
 
     function file(name, minutesAgo, size) {
         return { path: root + "/" + name, name: name, size: size || 1000,
@@ -254,17 +238,11 @@ TestCase {
         compare(app.notice, "");
     }
 
-    function test_rename_dialog_data() {
-        return [
-            { tag: "phone 480x800", w: 480, h: 800 },
-            { tag: "Q25 720x720", w: 720, h: 720 }
-        ];
-    }
-
     // The player's Rename asks for the name, the recording's own to start
-    // with; Cancel keeps it, the dialog's OK renames.
-    function test_rename_dialog(data) {
-        createApp([file("Recording 1.mp3", 1)], data.w, data.h);
+    // with; Cancel keeps it, the dialog's OK renames. (How it looks on each
+    // screen: tst_screens.)
+    function test_rename_dialog() {
+        createApp([file("Recording 1.mp3", 1)]);
         var row = openFirstPlayer();
         mouseClick(findButton(row, "Rename"));
         var field = findChild(page(), "promptField");
@@ -273,8 +251,6 @@ TestCase {
         verify(dialog.opened, "the rename dialog is not open");
         compare(dialog.title, "Rename recording");
         compare(field.text, "Recording 1");
-        wait(50);
-        shot("rename-dialog");
         mouseClick(findChild(page(), "promptRejectButton"));
         verify(!dialog.opened);
         compare(app.fileOps.files[0].name, "Recording 1.mp3");
@@ -294,13 +270,9 @@ TestCase {
         compare(app.fileOps.files[0].name, "Lecture.mp3");
     }
 
-    function test_delete_dialog_data() {
-        return test_rename_dialog_data();
-    }
-
     // The player's Delete asks first, naming the recording; Cancel keeps it.
-    function test_delete_dialog(data) {
-        createApp([file("A.mp3", 1), file("B.mp3", 2)], data.w, data.h);
+    function test_delete_dialog() {
+        createApp([file("A.mp3", 1), file("B.mp3", 2)]);
         var row = openFirstPlayer();
         mouseClick(findButton(row, "Delete"));
         var accept = findChild(page(), "confirmAcceptButton");
@@ -309,8 +281,6 @@ TestCase {
         verify(dialog.opened, "the delete dialog is not open");
         compare(dialog.title, "Delete recording");
         compare(dialog.message, "Delete “A”? This cannot be undone.");
-        wait(50);
-        shot("delete-dialog");
         mouseClick(findChild(page(), "confirmRejectButton"));
         verify(!dialog.opened);
         compare(app.fileOps.files.length, 2);
@@ -618,28 +588,5 @@ TestCase {
     function test_list_gives_way_to_recording_on_a_short_screen(data) {
         createApp([file("A.mp3", 1)], Units.gu(data.w), Units.gu(data.h));
         compare(page().listFitsWhileRecording, data.fits);
-    }
-
-    function test_layout_fits_data() {
-        return [
-            { tag: "phone 480x800", w: 480, h: 800 },
-            { tag: "Q25 720x720", w: 720, h: 720 },
-            { tag: "small 320x480", w: 320, h: 480 },
-            { tag: "tablet 1024x768", w: 1024, h: 768 }
-        ];
-    }
-
-    function test_layout_fits(data) {
-        createApp([file("A recording with a rather long name that has to be cut short somewhere.mp3", 1)], data.w, data.h);
-        var button = findChild(page(), "recordButton");
-        var p = button.mapToItem(null, 0, 0);
-        verify(p.y + button.height <= app.height + 0.5, "record button below the window: " + (p.y + button.height));
-        verify(p.x >= 0 && p.x + button.width <= app.width + 0.5, "record button off the side");
-        var l = list();
-        var lp = l.mapToItem(null, 0, 0);
-        verify(l.height >= 40, "no room for the list: " + l.height);
-        verify(lp.y >= app.header.height - 0.5, "list under the header");
-        var row = l.itemAtIndex(0);
-        verify(row.width <= l.width + 0.5, "row wider than the list");
     }
 }

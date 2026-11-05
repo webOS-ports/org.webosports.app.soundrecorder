@@ -178,6 +178,13 @@ For development on a device:
 Tests
 -----
 
+    tests/run-qml-tests.sh <path to luneos-components>
+
+runs the QML tests on the build host: the helpers and the pages once, then
+every screen once per device - the mindphone, the Q25, the TouchPad and
+the FuriPhone FLX1s (radon), or those in `PROFILES` - saving each as
+`build/test-output/ui/<profile>-<screen>.png`.
+
 See [tests/README.md](tests/README.md): QML tests of the helpers and of the
 pages on the build host, gtest unit tests of the plugin, static analysis,
 sanitizers, valgrind, a six-way build, and the recording test on a device.
