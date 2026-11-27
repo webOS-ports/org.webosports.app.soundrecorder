@@ -51,8 +51,9 @@ Features
   box once there are six or more. Tap one to open its player in place: seek,
   -10 s, play/pause, +10 s.
 - **Rename, Send by Email, Details, Delete** from the row's "…" button or
-  touch and hold. **Swipe a recording away** to delete it: the row asks
-  Delete / Cancel in place, as the legacy webOS lists did. Renaming never
+  touch and hold. **Swipe a recording** sideways to delete it: the row
+  asks Cancel / Delete in place, as Settings' lists and the legacy webOS
+  ones do. Renaming never
   replaces another recording.
 - **Preferences** (app menu): format, quality, stereo or mono (see
   [Recording formats](#recording-formats)), input and input level, and
