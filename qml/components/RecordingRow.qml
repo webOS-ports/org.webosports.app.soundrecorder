@@ -74,8 +74,9 @@ Item {
         width: parent.width
         height: Units.gu(7)
 
-        // Swiped far enough: the row asks Delete / Cancel in place, the
-        // way the legacy webOS lists did.
+        // Swiped far enough: the row asks Cancel / Delete in place, as
+        // Settings' lists and the Authenticator's do - the legacy webOS
+        // delete gesture.
         property bool confirming: false
 
         // Under the row while it is swiped: the question.
@@ -93,15 +94,15 @@ Item {
 
                 Item { Layout.fillWidth: true }
                 Button {
+                    objectName: "swipeCancelButton"
+                    text: "Cancel"
+                    onClicked: summary.cancelSwipe()
+                }
+                Button {
                     objectName: "swipeDeleteButton"
                     text: "Delete"
                     LuneOSButton.mainColor: LuneOSButton.negativeColor
                     onClicked: { summary.confirming = false; row.swipeDeleted(); }
-                }
-                Button {
-                    objectName: "swipeCancelButton"
-                    text: "Cancel"
-                    onClicked: summary.cancelSwipe()
                 }
                 Item { Layout.fillWidth: true }
             }
@@ -187,8 +188,8 @@ Item {
                 onTapped: if (!wasHeld) row.tapped()
             }
 
-            // Swipe sideways to delete: past a third of the width the row
-            // asks to confirm, short of it it springs back.
+            // Swipe sideways to delete: past 4 grid units, as in Settings,
+            // the row asks to confirm; short of it it springs back.
             DragHandler {
                 id: swipe
                 target: content
@@ -198,7 +199,7 @@ Item {
                 onActiveChanged: {
                     if (active)
                         return;
-                    if (Math.abs(content.x) > row.width / 3) {
+                    if (Math.abs(content.x) > Units.gu(4)) {
                         summary.confirming = true;
                         content.x = 0;
                     } else {

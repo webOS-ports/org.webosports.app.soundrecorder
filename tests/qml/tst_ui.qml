@@ -408,6 +408,9 @@ TestCase {
         swipeRow(row, 0.6);
         var del = findChild(row, "swipeDeleteButton");
         tryVerify(function() { return del.visible; }, 2000, "no Delete after a long swipe");
+        // Cancel, then Delete, as Settings' rows have them.
+        var cancel = findChild(row, "swipeCancelButton");
+        verify(cancel.mapToItem(row, 0, 0).x + cancel.width <= del.mapToItem(row, 0, 0).x, "Delete is not right of Cancel");
         compare(app.fileOps.files.length, 2, "deleted before confirming");
         mouseClick(del);
         compare(app.fileOps.files.length, 1);
@@ -429,7 +432,8 @@ TestCase {
     function test_short_swipe_springs_back() {
         createApp([file("A.mp3", 1)]);
         var row = list().itemAtIndex(0);
-        swipeRow(row, 0.15);
+        // Short of 4 grid units.
+        mouseDrag(row, row.width * 0.2, row.height / 2 > 30 ? 30 : row.height / 2, Units.gu(3), 0, Qt.LeftButton, Qt.NoModifier, 5);
         wait(300);
         verify(!findChild(row, "swipeDeleteButton").visible);
         compare(app.fileOps.files.length, 1);
